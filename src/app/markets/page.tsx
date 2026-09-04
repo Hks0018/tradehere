@@ -1,154 +1,204 @@
 import type { Metadata } from "next";
 import { MarketTicker } from "@/components/market/MarketTicker";
-import { MoversTabs } from "@/components/market/MoversTabs";
-import { SectorPerformance } from "@/components/market/SectorPerformance";
-import { SentimentGauge } from "@/components/market/SentimentGauge";
-import { StockCard } from "@/components/market/StockCard";
-import { IndicesPanel } from "@/components/features/markets/IndicesPanel";
+import { MarketPulse } from "@/components/market/MarketPulse";
+import { MarketFlow } from "@/components/market/MarketFlow";
+import { MoversRanking } from "@/components/market/MoversRanking";
+import { IndexBoard } from "@/components/market/IndexBoard";
+import { Band } from "@/components/ui/Band";
+import { Eyebrow } from "@/components/ui/Eyebrow";
+import { MaskedHeading } from "@/components/ui/MaskedHeading";
 import { PageHeader } from "@/components/ui/PageHeader";
-import { SectionHeading } from "@/components/ui/SectionHeading";
-import { Reveal, RevealGroup, RevealItem } from "@/components/ui/Reveal";
+import { SectionIntro } from "@/components/ui/SectionIntro";
+import { Reveal } from "@/components/ui/Reveal";
 import { Disclaimer } from "@/components/ui/DemoDataNote";
-import { Badge } from "@/components/ui/Badge";
-import { Button } from "@/components/ui/Button";
+import { ArrowLink } from "@/components/ui/Button";
 import {
   getAllMovers,
   getHighlights,
   getIndices,
+  getMarketFlow,
+  getMarketNarrative,
+  getMarketPulse,
   getMarketStatus,
-  getSectors,
-  getSentiment,
 } from "@/services/marketService";
-import { getStocks } from "@/services/stockService";
 import { cn } from "@/utils/cn";
 
 export const metadata: Metadata = {
   title: "Markets",
   description:
-    "Index levels, sector performance, market breadth and the day's biggest movers — a complete sample-market overview.",
+    "The session read as a story: overall mood, sector rotation, index levels, the day's movement and what it means.",
 };
 
-const TONE_STYLES = {
-  positive: "border-up-100 bg-up-50",
-  negative: "border-down-100 bg-down-50",
-  neutral: "border-ink-100 bg-ink-50",
+const TONE_MARK = {
+  positive: { glyph: "↑", label: "Supporting", className: "text-up-600" },
+  negative: { glyph: "↓", label: "Weighing", className: "text-down-600" },
+  neutral: { glyph: "→", label: "Watching", className: "text-ink-500" },
 } as const;
 
 export default async function MarketsPage() {
-  const [indices, movers, sectors, sentiment, highlights, trending, status] = await Promise.all([
+  const [indices, pulse, narrative, movers, flow, highlights, status] = await Promise.all([
     getIndices(),
+    getMarketPulse(),
+    getMarketNarrative(),
     getAllMovers(8),
-    getSectors(),
-    getSentiment(),
+    getMarketFlow(),
     getHighlights(),
-    getStocks({ category: "trending", limit: 8 }),
     getMarketStatus(),
   ]);
 
   return (
     <>
       <PageHeader
+        env="void"
         eyebrow="Markets"
-        title="The whole market, at a glance"
-        description="Benchmark and global indices, sector rotation, market breadth and the day's largest moves — organised into a single overview."
+        title={["The market,", "at a glance."]}
+        description="Not a wall of widgets. The session read in order — how it feels, where it rotated, what led, and why it matters."
       >
-        <div className="flex flex-wrap items-center gap-3">
-          <Badge tone="outline" className="bg-white">
-            <span aria-hidden className="size-1.5 rounded-full bg-ink-400" />
-            {status.label}
-          </Badge>
-          <Badge tone="brand">{sentiment.label}</Badge>
-        </div>
+        <p className="eyebrow text-paper-300/55">{status.label}</p>
+        <p className="eyebrow text-brand-300">Today · {narrative.mood}</p>
       </PageHeader>
+
+      {/* 01 — the mood, stated */}
+      <Band env="void" className="pb-4">
+        <div className="container-page">
+          <div className="grid gap-10 border-t border-paper-200/12 pt-14 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-20">
+            <MaskedHeading
+              lines={narrative.headline}
+              className="font-display text-display-2 text-paper-50 text-balance-tight"
+            />
+            <Reveal delay={0.18} y={14}>
+              <p className="text-lg leading-relaxed text-paper-200/70">{narrative.sentence}</p>
+            </Reveal>
+          </div>
+        </div>
+      </Band>
+
+      {/* 02 — Market Pulse */}
+      <Band env="void" grid className="section-y" id="pulse">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-1/2 top-1/2 -z-10 size-[48rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-600/10 blur-[160px]"
+        />
+        <div className="container-page">
+          <SectionIntro
+            index="01"
+            eyebrow="Market pulse"
+            lines={["Every sector,", "in one picture."]}
+            standfirst="Position shows rank and momentum, size shows share of market capitalisation. Hover or tab a sector to read it."
+            onVoid
+          />
+          <Reveal delay={0.1} y={26} className="mt-20">
+            <MarketPulse pulse={pulse} />
+          </Reveal>
+        </div>
+      </Band>
 
       <MarketTicker indices={indices} />
 
-      <section id="indices" className="scroll-mt-24 py-16 sm:py-20">
+      {/* 03 — Indices */}
+      <section className="section-y bg-white" id="indices">
         <div className="container-page">
-          <SectionHeading
+          <SectionIntro
+            index="02"
             eyebrow="Indices"
-            title="Market indices"
-            description="Indian benchmarks alongside a selection of global markets, each with its intraday shape."
+            lines={["Where the", "benchmarks closed."]}
+            standfirst="Indian benchmarks first, then the global markets that set the overnight tone."
           />
-          <Reveal className="mt-8">
-            <IndicesPanel indices={indices} />
-          </Reveal>
+          <div className="mt-16">
+            <IndexBoard indices={indices} />
+          </div>
         </div>
       </section>
 
-      <section id="movers" className="scroll-mt-24 border-y border-ink-100 bg-ink-50/50 py-16 sm:py-20">
+      {/* 04 — Movers */}
+      <Band env="paper" className="section-y" id="movers">
         <div className="container-page">
-          <SectionHeading
+          <SectionIntro
+            index="03"
             eyebrow="Market movers"
-            title="Gainers, losers and the most traded"
-            description="The names driving the session, ranked by move size and by traded volume."
+            lines={["What moved,", "and by how much."]}
+            standfirst="Ranked by the size of the move and by traded volume, with the session's leader given its due."
           />
-          <Reveal className="mt-8">
-            <MoversTabs movers={movers} />
+          <Reveal delay={0.1} y={18} className="mt-14">
+            <MoversRanking movers={movers} />
           </Reveal>
         </div>
-      </section>
+      </Band>
 
-      <section id="sectors" className="scroll-mt-24 py-16 sm:py-20">
+      {/* 05 — Rotation */}
+      <Band env="void" className="section-y" id="sectors">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -left-[10%] top-1/4 -z-10 size-[34rem] rounded-full bg-up-500/8 blur-[150px]"
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-[10%] bottom-0 -z-10 size-[30rem] rounded-full bg-down-500/8 blur-[150px]"
+        />
         <div className="container-page">
-          <SectionHeading
-            eyebrow="Market overview"
-            title="Sector performance and breadth"
-            description="Where money rotated during the sample session, and how broad participation was across the market."
+          <SectionIntro
+            index="04"
+            eyebrow="Sector rotation"
+            lines={["Where the money", "is rotating."]}
+            standfirst="Momentum rarely sits still. These are the sectors gaining and losing the session's attention."
+            onVoid
           />
+          <div className="mt-20">
+            <MarketFlow chains={flow} />
+          </div>
+        </div>
+      </Band>
 
-          <div className="mt-8 grid gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
-            <Reveal>
-              <div className="h-full rounded-card border border-ink-100 bg-white p-5 shadow-soft sm:p-6">
-                <div className="mb-4 flex items-center justify-between">
-                  <h3 className="text-base font-semibold text-ink-900">Sector performance</h3>
-                  <span className="text-xs text-ink-400">{sectors.length} sectors</span>
+      {/* 06 — Insights */}
+      <section className="section-y bg-white" id="insights">
+        <div className="container-page">
+          <div className="grid gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)] lg:gap-20">
+            <div className="lg:sticky lg:top-28 lg:self-start">
+              <Eyebrow index="05">Market insights</Eyebrow>
+              <MaskedHeading
+                lines={["What it", "means."]}
+                className="mt-8 font-display text-display-2 text-ink-900"
+              />
+              <Reveal delay={0.18} y={14}>
+                <p className="mt-8 max-w-sm text-lg leading-relaxed text-ink-600">
+                  The readings above, translated into the handful of things actually worth carrying
+                  into tomorrow.
+                </p>
+                <div className="mt-8">
+                  <ArrowLink href="/news">Read market news</ArrowLink>
                 </div>
-                <SectorPerformance sectors={sectors} />
-              </div>
-            </Reveal>
+              </Reveal>
+            </div>
 
-            <Reveal delay={0.08}>
-              <div className="h-full rounded-card border border-ink-100 bg-white p-5 shadow-soft sm:p-6">
-                <div className="mb-5 flex items-center justify-between">
-                  <h3 className="text-base font-semibold text-ink-900">Market sentiment</h3>
-                  <span className="text-xs text-ink-400">{sentiment.updatedLabel}</span>
-                </div>
-                <SentimentGauge sentiment={sentiment} />
-              </div>
-            </Reveal>
+            <ul>
+              {highlights.map((highlight, index) => (
+                <Reveal key={highlight.id} delay={index * 0.07} y={16} className="block">
+                  <li className="border-t border-ink-200 py-8 first:border-t-2 first:border-ink-900">
+                    <div className="flex flex-wrap items-baseline justify-between gap-4">
+                      <p
+                        className={cn(
+                          "eyebrow flex items-center gap-2",
+                          TONE_MARK[highlight.tone].className,
+                        )}
+                      >
+                        <span aria-hidden>{TONE_MARK[highlight.tone].glyph}</span>
+                        {TONE_MARK[highlight.tone].label}
+                      </p>
+                      <p className="tnum font-mono text-[0.6875rem] text-ink-300">
+                        {String(index + 1).padStart(2, "0")}
+                      </p>
+                    </div>
+                    <h3 className="mt-4 font-display text-headline font-semibold text-ink-900">
+                      {highlight.title}
+                    </h3>
+                    <p className="mt-3 max-w-2xl leading-relaxed text-ink-600">{highlight.detail}</p>
+                  </li>
+                </Reveal>
+              ))}
+            </ul>
           </div>
 
-          <RevealGroup className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {highlights.map((highlight) => (
-              <RevealItem key={highlight.id} className="h-full">
-                <article className={cn("h-full rounded-card border p-5", TONE_STYLES[highlight.tone])}>
-                  <h3 className="text-sm font-semibold text-ink-900">{highlight.title}</h3>
-                  <p className="mt-2 text-sm leading-relaxed text-ink-600">{highlight.detail}</p>
-                </article>
-              </RevealItem>
-            ))}
-          </RevealGroup>
-        </div>
-      </section>
-
-      <section className="border-t border-ink-100 bg-ink-50/50 py-16 sm:py-20">
-        <div className="container-page">
-          <SectionHeading
-            eyebrow="Trending"
-            title="Trending stocks"
-            description="Names drawing the most attention in the sample session."
-            action={<Button href="/stocks" variant="secondary">Open stock screener</Button>}
-          />
-          <RevealGroup className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {trending.map((stock) => (
-              <RevealItem key={stock.symbol} className="h-full">
-                <StockCard stock={stock} className="h-full" />
-              </RevealItem>
-            ))}
-          </RevealGroup>
-
-          <Disclaimer className="mt-10 bg-white" />
+          <Disclaimer className="mt-20" />
         </div>
       </section>
     </>

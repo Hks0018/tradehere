@@ -17,7 +17,6 @@ import {
   formatRelative,
   trendClass,
 } from "@/utils/format";
-import { cn } from "@/utils/cn";
 
 type TabKey = "overview" | "fundamentals" | "financials" | "news";
 
@@ -56,7 +55,7 @@ export function StockTabs({ stock, news }: { stock: StockDetail; news: NewsArtic
           animate={{ opacity: 1, y: 0 }}
           exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
           transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-          className="pt-6"
+          className="pt-10"
         >
           {tab === "overview" && <OverviewTab stock={stock} />}
           {tab === "fundamentals" && <FundamentalsTab stock={stock} />}
@@ -70,9 +69,9 @@ export function StockTabs({ stock, news }: { stock: StockDetail; news: NewsArtic
 
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <section className="rounded-card border border-ink-100 bg-white p-5 shadow-soft sm:p-6">
-      <h3 className="text-base font-semibold text-ink-900">{title}</h3>
-      <div className="mt-4">{children}</div>
+    <section className="border-t border-ink-900 pt-5">
+      <h3 className="eyebrow text-ink-400">{title}</h3>
+      <div className="mt-6">{children}</div>
     </section>
   );
 }
@@ -82,7 +81,7 @@ function OverviewTab({ stock }: { stock: StockDetail }) {
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
       <Panel title="Company overview">
         <p className="text-sm leading-relaxed text-ink-600">{stock.description}</p>
-        <StatGrid className="mt-6 border-t border-ink-100 pt-5" columns={4}>
+        <StatGrid className="mt-2" columns={4}>
           <Stat label="Sector" value={<span className="text-sm">{stock.sector}</span>} />
           <Stat label="Industry" value={<span className="text-sm">{stock.industry}</span>} />
           <Stat label="Founded" value={<span className="text-sm">{stock.founded}</span>} />
@@ -156,21 +155,21 @@ function FundamentalsTab({ stock }: { stock: StockDetail }) {
           <Stat label="Volume" value={formatNumber(stock.volume, 0)} />
         </StatGrid>
 
-        <div className="mt-6 border-t border-ink-100 pt-5">
-          <div className="flex items-center justify-between text-xs text-ink-400">
+        <div className="mt-8 border-t border-ink-200 pt-6">
+          <div className="eyebrow flex items-center justify-between text-ink-400">
             <span>52-week low</span>
             <span>52-week high</span>
           </div>
-          <div className="relative mt-2 h-2 rounded-full bg-ink-100">
+          <div className="relative mt-3 h-px bg-ink-200">
             <span
-              className="absolute -top-1 size-4 -translate-x-1/2 rounded-full border-2 border-white bg-brand-600 shadow-soft"
+              className="absolute -top-1.5 size-3 -translate-x-1/2 rounded-full bg-brand-600"
               style={{ left: `${position}%` }}
               aria-hidden
             />
           </div>
-          <div className="mt-2 flex items-center justify-between text-sm">
-            <span className="tnum font-medium text-ink-900">{formatCurrency(stock.low52)}</span>
-            <span className="tnum font-medium text-ink-900">{formatCurrency(stock.high52)}</span>
+          <div className="mt-3 flex items-center justify-between font-mono text-sm">
+            <span className="tnum text-ink-900">{formatCurrency(stock.low52)}</span>
+            <span className="tnum text-ink-900">{formatCurrency(stock.high52)}</span>
           </div>
         </div>
       </Panel>
@@ -190,7 +189,7 @@ function FinancialsTab({ stock }: { stock: StockDetail }) {
           <table className="w-full text-sm">
             <caption className="sr-only">Sample annual revenue, profit and margin</caption>
             <thead>
-              <tr className="border-b border-ink-100 text-xs uppercase tracking-wider text-ink-400">
+              <tr className="eyebrow border-b border-ink-900 text-ink-400">
                 <th scope="col" className="py-2 text-left font-semibold">Year</th>
                 <th scope="col" className="py-2 text-right font-semibold">Revenue</th>
                 <th scope="col" className="py-2 text-right font-semibold">Profit</th>
@@ -213,7 +212,7 @@ function FinancialsTab({ stock }: { stock: StockDetail }) {
             </tbody>
           </table>
         </div>
-        <p className="mt-4 text-xs text-ink-400">Figures in ₹ crore, converted for display. Sample data.</p>
+        <p className="mt-5 font-mono text-[0.6875rem] text-ink-400">Figures in ₹ crore, converted for display · sample data</p>
       </Panel>
     </div>
   );
@@ -222,7 +221,7 @@ function FinancialsTab({ stock }: { stock: StockDetail }) {
 function NewsTab({ news, name }: { news: NewsArticle[]; name: string }) {
   if (news.length === 0) {
     return (
-      <div className="rounded-card border border-dashed border-ink-200 bg-ink-50/50 px-6 py-12 text-center">
+      <div className="border-t border-ink-200 px-6 py-14 text-center">
         <p className="text-sm font-medium text-ink-700">No sample coverage for {name} yet</p>
         <Link href="/news" className="mt-2 inline-block text-sm font-medium text-brand-600 hover:text-brand-700">
           Browse all market news →
@@ -237,17 +236,14 @@ function NewsTab({ news, name }: { news: NewsArticle[]; name: string }) {
         <li key={article.id}>
           <Link
             href={`/news/${article.slug}`}
-            className={cn(
-              "group flex h-full flex-col rounded-card border border-ink-100 bg-white p-5 shadow-soft transition-all duration-300",
-              "hover:-translate-y-1 hover:shadow-lift",
-            )}
+            className="group flex h-full flex-col border-t border-ink-200 pt-4 transition-colors hover:border-ink-900"
           >
-            <span className="text-xs font-medium text-brand-600">{article.category}</span>
-            <span className="mt-2 text-sm font-semibold leading-snug text-ink-900 group-hover:text-brand-700">
+            <span className="eyebrow text-brand-600">{article.category}</span>
+            <span className="mt-3 font-display text-lg font-semibold leading-snug text-ink-900 transition-colors group-hover:text-brand-600">
               {article.title}
             </span>
-            <span className="mt-2 flex-1 text-sm leading-relaxed text-ink-500">{article.summary}</span>
-            <span className="mt-4 text-xs text-ink-400">
+            <span className="mt-3 flex-1 text-sm leading-relaxed text-ink-500">{article.summary}</span>
+            <span className="mt-5 font-mono text-[0.6875rem] text-ink-400">
               {article.source} · {formatRelative(article.publishedAt, DATA_REFERENCE_DATE)}
             </span>
           </Link>

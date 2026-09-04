@@ -219,3 +219,51 @@ export interface SearchResult {
   meta?: string;
   trend?: number;
 }
+
+/* ---------------------------------------------------------------------------
+ * Market Pulse — the derived view the signature visualisation consumes.
+ * Everything here is computed from `Sector` + `MarketSentiment`, so a real
+ * data source only has to satisfy those two contracts.
+ * ------------------------------------------------------------------------ */
+
+export interface SectorPulse extends Sector {
+  /** Absolute move normalised against the strongest mover, 0–1. */
+  momentum: number;
+  direction: Trend;
+  /** 1 = strongest performer in the session. */
+  rank: number;
+}
+
+export interface MarketBreadth {
+  advancers: number;
+  decliners: number;
+  unchanged: number;
+  advancePercent: number;
+}
+
+export interface MarketPulseData {
+  score: number;
+  label: string;
+  breadth: MarketBreadth;
+  sectors: SectorPulse[];
+  leaders: SectorPulse[];
+  laggards: SectorPulse[];
+  updatedLabel: string;
+}
+
+/** Plain-language reading of the session, composed from live figures. */
+export interface MarketNarrative {
+  mood: string;
+  headline: string[];
+  sentence: string;
+  leadSector: SectorPulse;
+  lagSector: SectorPulse;
+}
+
+export interface FlowChain {
+  id: string;
+  tone: "strong" | "weak";
+  label: string;
+  detail: string;
+  nodes: { name: string; changePercent: number }[];
+}

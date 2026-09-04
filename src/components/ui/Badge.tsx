@@ -1,18 +1,20 @@
 import type { ReactNode } from "react";
 import { cn } from "@/utils/cn";
+import { Delta } from "./Delta";
 
 type Tone = "neutral" | "brand" | "up" | "down" | "gold" | "outline" | "dark";
 
 const TONES: Record<Tone, string> = {
-  neutral: "bg-ink-50 text-ink-600 border-ink-100",
-  brand: "bg-brand-50 text-brand-700 border-brand-100",
-  up: "bg-up-50 text-up-700 border-up-100",
-  down: "bg-down-50 text-down-700 border-down-100",
-  gold: "bg-gold-100 text-gold-600 border-gold-100",
-  outline: "bg-transparent text-ink-600 border-ink-200",
-  dark: "bg-white/10 text-white border-white/20",
+  neutral: "border-ink-200 text-ink-600",
+  brand: "border-brand-200 text-brand-700",
+  up: "border-up-100 text-up-700",
+  down: "border-down-100 text-down-700",
+  gold: "border-gold-100 text-gold-600",
+  outline: "border-ink-200 text-ink-500",
+  dark: "border-paper-200/25 text-paper-200",
 };
 
+/** Flat hairline tag. No fills, no shadows — it should sit quietly in text. */
 export function Badge({
   children,
   tone = "neutral",
@@ -25,7 +27,7 @@ export function Badge({
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-1 text-xs font-medium leading-none",
+        "inline-flex items-center gap-1.5 rounded-pill border px-2.5 py-1 font-mono text-[0.6875rem] leading-none tracking-wide",
         TONES[tone],
         className,
       )}
@@ -35,7 +37,7 @@ export function Badge({
   );
 }
 
-/** Coloured percentage pill used across market surfaces. */
+/** Kept for compatibility with existing call sites; now renders as a `Delta`. */
 export function ChangeBadge({
   value,
   className,
@@ -45,16 +47,5 @@ export function ChangeBadge({
   className?: string;
   showIcon?: boolean;
 }) {
-  const tone: Tone = value > 0 ? "up" : value < 0 ? "down" : "neutral";
-  return (
-    <Badge tone={tone} className={cn("tnum font-semibold", className)}>
-      {showIcon && (
-        <span aria-hidden className="text-[0.65rem] leading-none">
-          {value > 0 ? "▲" : value < 0 ? "▼" : "■"}
-        </span>
-      )}
-      {value > 0 ? "+" : ""}
-      {value.toFixed(2)}%
-    </Badge>
-  );
+  return <Delta value={value} size="sm" showArrow={showIcon} className={className} />;
 }

@@ -76,8 +76,8 @@ export function CompoundCalculator() {
                   onClick={() => setFrequency(option.value)}
                   className={`rounded-pill border px-3.5 py-1.5 text-sm transition-colors ${
                     frequency === option.value
-                      ? "border-brand-300 bg-brand-50 text-brand-700"
-                      : "border-ink-200 text-ink-600 hover:bg-ink-50"
+                      ? "border-ink-900 bg-ink-900 text-paper-50"
+                      : "border-ink-200 text-ink-600 hover:border-ink-900"
                   }`}
                 >
                   {option.label}
@@ -89,7 +89,7 @@ export function CompoundCalculator() {
       }
       results={
         <>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-8 sm:grid-cols-3">
             <ResultCard
               label="Principal"
               value={<AnimatedNumber value={result.principal} decimals={0} prefix="₹" />}

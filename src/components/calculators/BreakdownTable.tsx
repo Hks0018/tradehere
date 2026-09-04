@@ -20,37 +20,38 @@ export function BreakdownTable({
   gainLabel?: string;
 }) {
   return (
-    <section className="overflow-hidden rounded-card border border-ink-100 bg-white shadow-soft">
-      <header className="flex items-center justify-between border-b border-ink-100 px-5 py-4">
-        <h3 className="text-base font-semibold text-ink-900">Year-by-year breakdown</h3>
-        <span className="text-xs text-ink-400">{rows.length} years</span>
+    <section>
+      <header className="flex items-baseline justify-between border-t border-ink-900 pt-4">
+        <h3 className="eyebrow text-ink-400">Year-by-year breakdown</h3>
+        <p className="tnum font-mono text-[0.6875rem] text-ink-400">{rows.length} years</p>
       </header>
-      <div className="max-h-96 overflow-auto">
-        <table className="w-full text-sm">
+
+      <div className="mt-6 max-h-[28rem] overflow-auto">
+        <table className="w-full">
           <caption className="sr-only">Projected value at the end of each year</caption>
-          <thead className="sticky top-0 bg-ink-50/95 backdrop-blur">
-            <tr className="text-xs uppercase tracking-wider text-ink-500">
-              <th scope="col" className="px-5 py-3 text-left font-semibold">Year</th>
-              <th scope="col" className="px-5 py-3 text-right font-semibold">{investedLabel}</th>
-              <th scope="col" className="px-5 py-3 text-right font-semibold">{gainLabel}</th>
-              <th scope="col" className="px-5 py-3 text-right font-semibold">{valueLabel}</th>
+          <thead className="sticky top-0 bg-white">
+            <tr className="eyebrow border-b border-ink-200 text-ink-400">
+              <th scope="col" className="py-3 pr-4 text-left">Year</th>
+              <th scope="col" className="py-3 pr-4 text-right">{investedLabel}</th>
+              <th scope="col" className="py-3 pr-4 text-right">{gainLabel}</th>
+              <th scope="col" className="py-3 text-right">{valueLabel}</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr key={row.year} className="border-b border-ink-100 last:border-0 hover:bg-ink-50/60">
-                <th scope="row" className="px-5 py-3 text-left font-medium text-ink-900">
-                  Year {row.year}
+              <tr key={row.year} className="border-b border-ink-100">
+                <th scope="row" className="py-3.5 pr-4 text-left font-mono text-sm text-ink-500">
+                  {String(row.year).padStart(2, "0")}
                 </th>
-                <td className="tnum px-5 py-3 text-right text-ink-600">
+                <td className="tnum py-3.5 pr-4 text-right font-mono text-sm text-ink-600">
                   <span className="sm:hidden">{formatCompactCurrency(row.invested)}</span>
                   <span className="hidden sm:inline">{formatCurrency(row.invested, 0)}</span>
                 </td>
-                <td className="tnum px-5 py-3 text-right font-medium text-up-600">
+                <td className="tnum py-3.5 pr-4 text-right font-mono text-sm text-up-600">
                   <span className="sm:hidden">{formatCompactCurrency(row.gain)}</span>
                   <span className="hidden sm:inline">{formatCurrency(row.gain, 0)}</span>
                 </td>
-                <td className="tnum px-5 py-3 text-right font-semibold text-ink-900">
+                <td className="tnum py-3.5 text-right font-mono text-sm font-medium text-ink-900">
                   <span className="sm:hidden">{formatCompactCurrency(row.value)}</span>
                   <span className="hidden sm:inline">{formatCurrency(row.value, 0)}</span>
                 </td>

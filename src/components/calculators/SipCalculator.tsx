@@ -53,7 +53,7 @@ export function SipCalculator() {
             suffix=" yr"
           />
 
-          <div className="rounded-xl bg-ink-50 p-4">
+          <div className="border-t border-ink-200 pt-5">
             <p className="text-xs leading-relaxed text-ink-500">
               Contributions are assumed at the start of each month and the return is applied at a
               constant monthly rate. Real-world returns vary from year to year.
@@ -63,7 +63,7 @@ export function SipCalculator() {
       }
       results={
         <>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-8 sm:grid-cols-3">
             <ResultCard
               label="Total invested"
               value={<AnimatedNumber value={result.invested} decimals={0} prefix="₹" />}

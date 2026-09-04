@@ -1,39 +1,13 @@
 "use client";
 
-import { motion, useInView, useReducedMotion } from "framer-motion";
-import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { createContext, useContext, useRef, type ReactNode } from "react";
+import { useRevealed } from "@/hooks/useRevealed";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 /** Set by `RevealGroup` so its items snap instead of tweening when forced. */
 const InstantContext = createContext(false);
-
-/**
- * Reveals content when it scrolls into view.
- *
- * Two fail-safes matter here, because sections carry the page's actual content:
- * if the document is not visible (background tab, print, prerender) the
- * intersection observer never fires, so we reveal on a short timer instead; and
- * the `data-reveal` hook lets the no-script stylesheet in the root layout
- * unhide everything when JavaScript is unavailable.
- */
-function useRevealState(ref: React.RefObject<HTMLElement | null>, once: boolean) {
-  const inView = useInView(ref, { once, margin: "-80px" });
-  const [forced, setForced] = useState(false);
-
-  useEffect(() => {
-    if (typeof document === "undefined") return;
-    const check = () => {
-      if (document.visibilityState !== "visible") setForced(true);
-    };
-    const timer = window.setTimeout(check, 600);
-    return () => window.clearTimeout(timer);
-  }, []);
-
-  // When the reveal is forced (document not visible) rAF is throttled, so the
-  // tween would freeze part-way — snap to the end state instead.
-  return { show: inView || forced, instant: forced && !inView };
-}
 
 interface RevealProps {
   children: ReactNode;
@@ -47,7 +21,7 @@ interface RevealProps {
 export function Reveal({ children, className, delay = 0, y = 18, once = true }: RevealProps) {
   const ref = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
-  const { show, instant } = useRevealState(ref, once);
+  const { revealed: show, instant } = useRevealed(ref, { once });
 
   if (reduceMotion) {
     return (
@@ -85,7 +59,7 @@ export function RevealGroup({
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const reduceMotion = useReducedMotion();
-  const { show, instant } = useRevealState(ref, true);
+  const { revealed: show, instant } = useRevealed(ref);
 
   if (reduceMotion) {
     return (

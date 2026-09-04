@@ -1,110 +1,105 @@
-import { CalendarDays, Package, TrendingUp } from "lucide-react";
 import type { Ipo } from "@/types";
-import { Badge } from "@/components/ui/Badge";
+import { Delta } from "@/components/ui/Delta";
 import { cn } from "@/utils/cn";
-import { formatCompactCurrency, formatCurrency, formatShortDate, trendClass } from "@/utils/format";
+import { formatCompactCurrency, formatCurrency, formatShortDate } from "@/utils/format";
 
-const STATUS_TONE = {
-  Open: "up",
-  Upcoming: "brand",
-  Listed: "neutral",
+const STATUS_STYLE = {
+  Open: "text-up-600",
+  Upcoming: "text-brand-600",
+  Listed: "text-ink-500",
 } as const;
 
-export function IpoCard({ ipo }: { ipo: Ipo }) {
+/**
+ * One offering, set as an editorial entry: status and company first, the
+ * numbers as a mono spec row beneath, and the single most useful signal
+ * (subscription or performance since listing) given the closing weight.
+ */
+export function IpoEntry({ ipo, index }: { ipo: Ipo; index: number }) {
   const listingGain =
-    ipo.listingPrice && ipo.currentPrice
+    ipo.currentPrice != null
       ? ((ipo.currentPrice - ipo.priceBand.max) / ipo.priceBand.max) * 100
       : null;
 
   return (
-    <article className="flex h-full flex-col rounded-card border border-ink-100 bg-white p-5 shadow-soft transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:shadow-lift">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="text-[0.9375rem] font-semibold leading-snug text-ink-900">{ipo.company}</h3>
-          <p className="mt-1 text-xs text-ink-400">{ipo.sector}</p>
-        </div>
-        <Badge tone={STATUS_TONE[ipo.status]}>
-          {ipo.status === "Open" && <span aria-hidden className="size-1.5 rounded-full bg-up-500" />}
+    <article className="grid gap-x-10 gap-y-6 border-t border-ink-200 py-8 lg:grid-cols-[3rem_minmax(0,1.5fr)_minmax(0,1fr)] first:border-ink-900">
+      <p className="tnum hidden font-mono text-xs text-ink-300 lg:block">
+        {String(index + 1).padStart(2, "0")}
+      </p>
+
+      <div className="min-w-0">
+        <p className={cn("eyebrow flex items-center gap-2", STATUS_STYLE[ipo.status])}>
+          {ipo.status === "Open" && (
+            <span aria-hidden className="size-1.5 rounded-full bg-up-500" />
+          )}
           {ipo.status}
-        </Badge>
+          <span aria-hidden className="text-ink-200">/</span>
+          <span className="text-ink-400">{ipo.sector}</span>
+        </p>
+
+        <h3 className="mt-4 font-display text-2xl font-semibold leading-tight tracking-[-0.028em] text-ink-900">
+          {ipo.company}
+        </h3>
+        <p className="mt-3 max-w-xl leading-relaxed text-ink-600">{ipo.summary}</p>
+
+        <dl className="mt-6 flex flex-wrap gap-x-10 gap-y-4">
+          {[
+            { label: "Price band", value: `₹${ipo.priceBand.min}–${ipo.priceBand.max}` },
+            { label: "Lot size", value: `${ipo.lotSize} shares` },
+            { label: "Issue size", value: formatCompactCurrency(ipo.issueSize) },
+            {
+              label: ipo.status === "Listed" ? "Listed" : "Open — close",
+              value:
+                ipo.status === "Listed" && ipo.listingDate
+                  ? formatShortDate(ipo.listingDate)
+                  : `${formatShortDate(ipo.openDate)} – ${formatShortDate(ipo.closeDate)}`,
+            },
+          ].map((item) => (
+            <div key={item.label}>
+              <dt className="eyebrow text-ink-400">{item.label}</dt>
+              <dd className="tnum mt-1.5 font-mono text-sm text-ink-900">{item.value}</dd>
+            </div>
+          ))}
+        </dl>
       </div>
 
-      <p className="mt-3 text-sm leading-relaxed text-ink-500">{ipo.summary}</p>
-
-      <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-3.5 border-t border-ink-100 pt-4 text-sm">
-        <div>
-          <dt className="text-xs text-ink-400">Price band</dt>
-          <dd className="tnum mt-0.5 font-semibold text-ink-900">
-            ₹{ipo.priceBand.min} – ₹{ipo.priceBand.max}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-xs text-ink-400">Lot size</dt>
-          <dd className="tnum mt-0.5 font-semibold text-ink-900">
-            <Package className="mr-1 inline size-3.5 text-ink-300" aria-hidden />
-            {ipo.lotSize} shares
-          </dd>
-        </div>
-        <div>
-          <dt className="text-xs text-ink-400">Issue size</dt>
-          <dd className="tnum mt-0.5 font-semibold text-ink-900">
-            {formatCompactCurrency(ipo.issueSize)}
-          </dd>
-        </div>
-        <div>
-          <dt className="text-xs text-ink-400">
-            {ipo.status === "Listed" ? "Listed on" : "Open — Close"}
-          </dt>
-          <dd className="tnum mt-0.5 font-semibold text-ink-900">
-            <CalendarDays className="mr-1 inline size-3.5 text-ink-300" aria-hidden />
-            {ipo.status === "Listed" && ipo.listingDate
-              ? formatShortDate(ipo.listingDate)
-              : `${formatShortDate(ipo.openDate)} – ${formatShortDate(ipo.closeDate)}`}
-          </dd>
-        </div>
-      </dl>
-
-      <div className="mt-auto pt-4">
-        {ipo.status === "Listed" && ipo.currentPrice ? (
-          <div className="flex items-center justify-between rounded-xl bg-ink-50/70 px-3.5 py-3">
-            <div>
-              <p className="text-xs text-ink-400">Current price</p>
-              <p className="tnum mt-0.5 text-sm font-semibold text-ink-900">
-                {formatCurrency(ipo.currentPrice)}
-              </p>
-            </div>
-            {listingGain !== null && (
-              <div className="text-right">
-                <p className="text-xs text-ink-400">Vs issue price</p>
-                <p className={cn("tnum mt-0.5 text-sm font-semibold", trendClass(listingGain))}>
-                  {listingGain > 0 ? "+" : ""}
-                  {listingGain.toFixed(2)}%
-                </p>
-              </div>
-            )}
+      <div className="lg:border-l lg:border-ink-100 lg:pl-10">
+        {ipo.status === "Listed" && ipo.currentPrice != null ? (
+          <div>
+            <p className="eyebrow text-ink-400">Since issue price</p>
+            <p className="mt-3">
+              <Delta value={listingGain ?? 0} size="lg" className="font-display text-3xl" />
+            </p>
+            <p className="tnum mt-4 font-mono text-sm text-ink-600">
+              Now {formatCurrency(ipo.currentPrice)}
+              {ipo.listingPrice != null && ` · listed at ${formatCurrency(ipo.listingPrice)}`}
+            </p>
           </div>
-        ) : ipo.subscriptionTimes ? (
-          <div className="rounded-xl bg-ink-50/70 px-3.5 py-3">
-            <div className="flex items-center justify-between">
-              <p className="flex items-center gap-1.5 text-xs text-ink-400">
-                <TrendingUp className="size-3.5" aria-hidden />
-                Subscription
-              </p>
-              <p className="tnum text-sm font-semibold text-up-600">
-                {ipo.subscriptionTimes.toFixed(1)}x
-              </p>
-            </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink-200">
+        ) : ipo.subscriptionTimes != null ? (
+          <div>
+            <p className="eyebrow text-ink-400">Subscribed</p>
+            <p className="tnum mt-3 font-display text-3xl font-semibold text-up-600">
+              {ipo.subscriptionTimes.toFixed(1)}×
+            </p>
+            <div className="mt-4 h-px w-full bg-ink-200">
               <span
-                className="block h-full rounded-full bg-up-500"
+                className="block h-px bg-up-500"
                 style={{ width: `${Math.min((ipo.subscriptionTimes / 50) * 100, 100)}%` }}
                 aria-hidden
               />
             </div>
+            <p className="mt-3 font-mono text-[0.6875rem] text-ink-400">
+              Closes {formatShortDate(ipo.closeDate)}
+            </p>
           </div>
         ) : (
-          <div className="rounded-xl border border-dashed border-ink-200 px-3.5 py-3 text-center text-xs text-ink-400">
-            Subscription opens {formatShortDate(ipo.openDate)}
+          <div>
+            <p className="eyebrow text-ink-400">Status</p>
+            <p className="mt-3 font-display text-xl font-semibold text-ink-900">
+              Opens {formatShortDate(ipo.openDate)}
+            </p>
+            <p className="mt-3 font-mono text-[0.6875rem] text-ink-400">
+              Subscription figures publish once the issue opens
+            </p>
           </div>
         )}
       </div>

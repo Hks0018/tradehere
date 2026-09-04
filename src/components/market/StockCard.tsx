@@ -1,92 +1,86 @@
 import Link from "next/link";
 import type { Stock } from "@/types";
-import { ChangeBadge } from "@/components/ui/Badge";
+import { Delta } from "@/components/ui/Delta";
 import { Sparkline } from "@/components/ui/Sparkline";
 import { cn } from "@/utils/cn";
 import { formatCompactCurrency, formatCurrency } from "@/utils/format";
 
-/** Card presentation of a stock — used in grids and on mobile lists. */
+/**
+ * A stock in a grid. Anchored by a rule rather than enclosed in a box — the
+ * rule darkens on hover, which reads as selection without adding a container.
+ */
 export function StockCard({ stock, className }: { stock: Stock; className?: string }) {
   return (
     <Link
       href={`/stocks/${stock.symbol}`}
       className={cn(
-        "group flex flex-col rounded-card border border-ink-100 bg-white p-4 shadow-soft transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:border-ink-200 hover:shadow-lift",
+        "group/card flex flex-col border-t border-ink-200 pt-4 transition-colors hover:border-ink-900",
         className,
       )}
     >
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="truncate text-sm font-semibold text-ink-900 group-hover:text-brand-700">
-            {stock.name}
-          </p>
-          <p className="mt-0.5 text-xs text-ink-400">
-            {stock.symbol} · {stock.sector}
-          </p>
-        </div>
-        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-ink-50 text-[0.6875rem] font-bold tracking-tight text-ink-500">
-          {stock.symbol.slice(0, 3)}
-        </span>
+      <div className="flex items-baseline justify-between gap-3">
+        <p className="font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-ink-400">
+          {stock.symbol}
+        </p>
+        <Delta value={stock.changePercent} size="xs" />
       </div>
 
-      <div className="mt-4 flex items-end justify-between gap-3">
-        <div>
-          <p className="tnum text-lg font-semibold text-ink-900">{formatCurrency(stock.price)}</p>
-          <p className="mt-1 text-xs text-ink-400">{formatCompactCurrency(stock.marketCap)} m-cap</p>
-        </div>
-        <div className="flex flex-col items-end gap-2">
-          <ChangeBadge value={stock.changePercent} />
-          <Sparkline
-            data={stock.series}
-            trend={stock.changePercent}
-            id={`card-${stock.symbol}`}
-            width={92}
-            height={30}
-            filled={false}
-          />
-        </div>
+      <p className="mt-3 font-display text-lg font-semibold leading-tight tracking-[-0.025em] text-ink-900 transition-colors group-hover/card:text-brand-600">
+        {stock.name}
+      </p>
+
+      <div className="mt-4">
+        <Sparkline
+          data={stock.series}
+          trend={stock.changePercent}
+          id={`card-${stock.symbol}`}
+          width={220}
+          height={44}
+          className="w-full"
+        />
+      </div>
+
+      <div className="mt-4 flex items-baseline justify-between gap-3">
+        <p className="tnum font-mono text-sm text-ink-900">{formatCurrency(stock.price)}</p>
+        <p className="font-mono text-[0.6875rem] text-ink-400">
+          {formatCompactCurrency(stock.marketCap)}
+        </p>
       </div>
     </Link>
   );
 }
 
-/** Compact single-line row used inside panels and the movers tabs. */
+/** Compact single-line row for dense lists. */
 export function StockRow({ stock, rank }: { stock: Stock; rank?: number }) {
   return (
     <Link
       href={`/stocks/${stock.symbol}`}
-      className="group flex items-center gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-ink-50 sm:gap-4"
+      className="group/row grid items-center gap-4 border-b border-ink-100 py-4 sm:grid-cols-[3rem_minmax(0,1fr)_auto_auto] sm:gap-8"
     >
       {typeof rank === "number" && (
-        <span className="tnum hidden w-5 shrink-0 text-sm font-medium text-ink-300 sm:block">
-          {rank}
+        <span className="tnum hidden font-mono text-xs text-ink-300 sm:block">
+          {String(rank).padStart(2, "0")}
         </span>
       )}
-      <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-ink-50 text-[0.6875rem] font-bold tracking-tight text-ink-500">
-        {stock.symbol.slice(0, 3)}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium text-ink-900 group-hover:text-brand-700">
+      <span className="min-w-0">
+        <span className="block truncate text-[0.9375rem] font-medium text-ink-900 transition-colors group-hover/row:text-brand-600">
           {stock.name}
         </span>
-        <span className="block truncate text-xs text-ink-400">{stock.symbol}</span>
+        <span className="mt-0.5 block font-mono text-[0.6875rem] text-ink-400">{stock.symbol}</span>
       </span>
-      <Sparkline
-        data={stock.series}
-        trend={stock.changePercent}
-        id={`row-${stock.symbol}`}
-        width={72}
-        height={26}
-        filled={false}
-        className="hidden shrink-0 sm:block"
-      />
-      <span className="shrink-0 text-right">
-        <span className="tnum block text-sm font-semibold text-ink-900">
-          {formatCurrency(stock.price)}
-        </span>
-        <span className="mt-0.5 block">
-          <ChangeBadge value={stock.changePercent} showIcon={false} className="px-1.5 py-0.5" />
-        </span>
+      <span className="hidden sm:block">
+        <Sparkline
+          data={stock.series}
+          trend={stock.changePercent}
+          id={`srow-${stock.symbol}`}
+          width={100}
+          height={28}
+          filled={false}
+        />
+      </span>
+      <span className="flex items-baseline justify-between gap-6 sm:justify-end">
+        <span className="tnum font-mono text-sm text-ink-800">{formatCurrency(stock.price)}</span>
+        <Delta value={stock.changePercent} size="sm" className="w-24 justify-end" />
       </span>
     </Link>
   );

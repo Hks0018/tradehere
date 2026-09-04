@@ -1,73 +1,136 @@
 @import "tailwindcss";
 
+/* ============================================================================
+   TRADEHERE DESIGN SYSTEM
+   ----------------------------------------------------------------------------
+   Three environments carry the whole product and give the site its rhythm:
+
+     VOID    near-black, for immersive data moments (Market Pulse, Market Flow)
+     PAPER   warm off-white, for editorial reading
+     PLAIN   pure white, for dense functional surfaces (screeners, calculators)
+
+   Colour never carries meaning alone — direction is always paired with an
+   arrow, a word, or a sign.
+   ========================================================================= */
+
 @theme {
-  /* ---- Color tokens ---------------------------------------------------- */
-  --color-ink-950: #060a13;
-  --color-ink-900: #0b1220;
-  --color-ink-800: #131c2e;
-  --color-ink-700: #1f2a44;
-  --color-ink-600: #33415a;
-  --color-ink-500: #5a6880;
-  --color-ink-400: #8492a8;
-  --color-ink-300: #b3becd;
-  --color-ink-200: #d8dfe9;
-  --color-ink-100: #e9eef5;
-  --color-ink-50:  #f5f8fc;
+  /* ---- Void: the dark environment ------------------------------------- */
+  --color-void-950: #06060a;
+  --color-void-900: #0b0b10;
+  --color-void-850: #101017;
+  --color-void-800: #16161f;
+  --color-void-700: #1e1e29;
+  --color-void-600: #2a2a37;
+  --color-void-500: #3a3a4a;
 
-  --color-brand-50:  #eff1ff;
-  --color-brand-100: #e1e4ff;
-  --color-brand-200: #c6caff;
-  --color-brand-300: #a2a4fb;
-  --color-brand-400: #837ff5;
-  --color-brand-500: #5b54ec;
-  --color-brand-600: #4a3fdc;
-  --color-brand-700: #3d33b8;
-  --color-brand-800: #332c94;
-  --color-brand-900: #2b2777;
+  /* ---- Paper: the warm editorial environment --------------------------- */
+  --color-paper-50: #fdfcfa;
+  --color-paper-100: #f8f5f0;
+  --color-paper-200: #f0ece4;
+  --color-paper-300: #e4ded2;
+  --color-paper-400: #d3cabb;
 
-  --color-up-50:  #e7f8f0;
-  --color-up-100: #c8efdd;
-  --color-up-500: #0fa968;
-  --color-up-600: #0b8b55;
-  --color-up-700: #096f45;
+  /* ---- Ink: type and hairlines (retuned, names kept) ------------------- */
+  --color-ink-950: #06060a;
+  --color-ink-900: #101017;
+  --color-ink-800: #1c1c26;
+  --color-ink-700: #2f2f3c;
+  --color-ink-600: #4a4a5a;
+  --color-ink-500: #6c6c7d;
+  --color-ink-400: #8f8f9f;
+  --color-ink-300: #b4b4c0;
+  --color-ink-200: #d7d7de;
+  --color-ink-100: #e9e9ee;
+  --color-ink-50: #f5f5f7;
 
-  --color-down-50:  #fdecec;
-  --color-down-100: #fad4d4;
-  --color-down-500: #e14b4b;
-  --color-down-600: #c43a3a;
-  --color-down-700: #9f2f2f;
+  /* ---- Brand: violet, used sparingly ----------------------------------- */
+  --color-brand-50: #f2f0ff;
+  --color-brand-100: #e6e2ff;
+  --color-brand-200: #cdc6ff;
+  --color-brand-300: #ada2ff;
+  --color-brand-400: #9184ff;
+  --color-brand-500: #7c6cf6;
+  --color-brand-600: #6355e0;
+  --color-brand-700: #4f43bd;
+  --color-brand-800: #413899;
+  --color-brand-900: #37307c;
 
-  --color-gold-100: #f7ecd2;
-  --color-gold-500: #d9a441;
-  --color-gold-600: #b8862d;
+  /* ---- Direction: rise / fall ------------------------------------------ */
+  --color-up-50: #e7f8f1;
+  --color-up-100: #c4efdf;
+  --color-up-300: #6ee0b4;
+  --color-up-400: #34d399;
+  --color-up-500: #10b981;
+  --color-up-600: #059669;
+  --color-up-700: #047857;
 
-  --color-teal-500: #12a5a5;
-  --color-amber-soft: #fff6e6;
+  --color-down-50: #fdeceb;
+  --color-down-100: #fbd6d4;
+  --color-down-300: #ff9d97;
+  --color-down-400: #ff7a72;
+  --color-down-500: #f0524d;
+  --color-down-600: #d93b36;
+  --color-down-700: #b32e2a;
 
-  /* ---- Radii ----------------------------------------------------------- */
-  --radius-card: 1.125rem;
+  --color-gold-100: #f6ecd6;
+  --color-gold-500: #c9942f;
+  --color-gold-600: #a87821;
+  --color-teal-500: #0e9b98;
+  --color-amber-soft: #fbf4e6;
+
+  /* ---- Radii: much flatter than before --------------------------------- */
+  --radius-card: 0.5rem;
   --radius-pill: 999px;
 
-  /* ---- Shadows --------------------------------------------------------- */
-  --shadow-soft: 0 1px 2px rgba(11, 18, 32, 0.04), 0 4px 16px rgba(11, 18, 32, 0.05);
-  --shadow-lift: 0 2px 4px rgba(11, 18, 32, 0.05), 0 16px 40px rgba(11, 18, 32, 0.10);
-  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  /* ---- Shadows: nearly gone. Hairlines do the work now ----------------- */
+  --shadow-soft: 0 1px 2px rgba(6, 6, 10, 0.03);
+  --shadow-lift: 0 12px 40px -16px rgba(6, 6, 10, 0.18);
+  --shadow-float: 0 24px 70px -30px rgba(6, 6, 10, 0.45);
 
   /* ---- Typography ------------------------------------------------------ */
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-display: var(--font-display), var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+  --font-mono: var(--font-mono-data), ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  /* Fluid editorial scale. Line-heights are tight by design. */
+  --text-display-1: clamp(3rem, 9.5vw, 8.75rem);
+  --text-display-1--line-height: 0.9;
+  --text-display-1--letter-spacing: -0.045em;
+  --text-display-1--font-weight: 600;
+
+  --text-display-2: clamp(2.5rem, 6.4vw, 5.25rem);
+  --text-display-2--line-height: 0.94;
+  --text-display-2--letter-spacing: -0.038em;
+  --text-display-2--font-weight: 600;
+
+  --text-display-3: clamp(1.875rem, 3.9vw, 3.25rem);
+  --text-display-3--line-height: 1.02;
+  --text-display-3--letter-spacing: -0.03em;
+  --text-display-3--font-weight: 600;
+
+  --text-headline: clamp(1.375rem, 2.3vw, 2rem);
+  --text-headline--line-height: 1.12;
+  --text-headline--letter-spacing: -0.022em;
+  --text-headline--font-weight: 600;
+
+  /* Numbers get their own scale — they are the subject, not decoration. */
+  --text-data-xl: clamp(2.75rem, 6vw, 5rem);
+  --text-data-xl--line-height: 0.92;
+  --text-data-xl--letter-spacing: -0.035em;
+
+  --text-data-lg: clamp(1.875rem, 3vw, 2.75rem);
+  --text-data-lg--line-height: 0.96;
+  --text-data-lg--letter-spacing: -0.028em;
 
   /* ---- Motion ---------------------------------------------------------- */
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
-  --duration-fast: 150ms;
-  --duration-base: 280ms;
-  --duration-slow: 620ms;
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --duration-fast: 160ms;
+  --duration-base: 320ms;
+  --duration-slow: 720ms;
 }
 
 :root {
-  --page: #ffffff;
-  --page-muted: var(--color-ink-50);
   color-scheme: light;
 }
 
@@ -81,7 +144,7 @@ html {
 }
 
 body {
-  background: var(--page);
+  background: var(--color-paper-50);
   color: var(--color-ink-900);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
@@ -89,28 +152,60 @@ body {
 }
 
 ::selection {
-  background: var(--color-brand-200);
-  color: var(--color-ink-900);
+  background: var(--color-ink-900);
+  color: var(--color-paper-50);
 }
 
-/* Focus visibility — consistent across the whole platform */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
   outline: 2px solid var(--color-brand-500);
-  outline-offset: 2px;
-  border-radius: 6px;
+  outline-offset: 3px;
+  border-radius: 3px;
 }
 
-/* Utility layer -------------------------------------------------------- */
+/* Focus needs to survive on dark environments too. */
+.on-void :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline-color: var(--color-brand-300);
+}
+
+/* ============================================================================
+   Layout utilities
+   ========================================================================= */
+
 @utility container-page {
   width: 100%;
   margin-inline: auto;
-  padding-inline: 1.25rem;
-  max-width: 80rem;
+  padding-inline: 1.5rem;
+  max-width: 88rem;
+}
+
+@utility container-reading {
+  width: 100%;
+  margin-inline: auto;
+  padding-inline: 1.5rem;
+  max-width: 44rem;
+}
+
+/** Vertical rhythm for full-bleed sections. */
+@utility section-y {
+  padding-block: clamp(4.5rem, 9vw, 9rem);
+}
+
+@utility section-y-sm {
+  padding-block: clamp(3rem, 5.5vw, 5rem);
 }
 
 @utility tnum {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum";
+}
+
+/** Small mono label — the system's signature detail. */
+@utility eyebrow {
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
 
 @utility text-balance-tight {
@@ -128,20 +223,41 @@ body {
   }
 }
 
-@keyframes th-float {
-  0%, 100% { transform: translate3d(0, 0, 0); }
-  50% { transform: translate3d(0, -10px, 0); }
+/** Hairline rules replace card borders as the primary separator. */
+@utility rule-t {
+  border-top: 1px solid var(--color-ink-100);
 }
 
-@keyframes th-pulse-ring {
-  0% { transform: scale(0.9); opacity: 0.7; }
-  70% { transform: scale(1.6); opacity: 0; }
-  100% { transform: scale(1.6); opacity: 0; }
+@utility rule-b {
+  border-bottom: 1px solid var(--color-ink-100);
 }
+
+@utility rule-void-t {
+  border-top: 1px solid color-mix(in srgb, #fff 10%, transparent);
+}
+
+@utility rule-void-b {
+  border-bottom: 1px solid color-mix(in srgb, #fff 10%, transparent);
+}
+
+/* ============================================================================
+   Motion
+   ========================================================================= */
 
 @keyframes th-marquee {
   from { transform: translate3d(0, 0, 0); }
   to { transform: translate3d(-50%, 0, 0); }
+}
+
+@keyframes th-pulse-ring {
+  0% { transform: scale(0.85); opacity: 0.65; }
+  70% { transform: scale(1.9); opacity: 0; }
+  100% { transform: scale(1.9); opacity: 0; }
+}
+
+@keyframes th-drift {
+  0%, 100% { transform: translate3d(0, 0, 0); }
+  50% { transform: translate3d(0, -8px, 0); }
 }
 
 @keyframes th-shimmer {
@@ -149,9 +265,15 @@ body {
   to { background-position: -200% 0; }
 }
 
-.th-float { animation: th-float 7s var(--ease-out-soft) infinite; }
-.th-marquee { animation: th-marquee 42s linear infinite; }
-.th-pulse-ring { animation: th-pulse-ring 2.4s ease-out infinite; }
+@keyframes th-breathe {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.045); }
+}
+
+.th-marquee { animation: th-marquee 54s linear infinite; }
+.th-pulse-ring { animation: th-pulse-ring 2.8s ease-out infinite; }
+.th-drift { animation: th-drift 8s var(--ease-out-soft) infinite; }
+.th-breathe { animation: th-breathe 5.5s ease-in-out infinite; }
 
 .th-skeleton {
   background: linear-gradient(90deg, var(--color-ink-100) 25%, var(--color-ink-50) 50%, var(--color-ink-100) 75%);
@@ -159,16 +281,90 @@ body {
   animation: th-shimmer 1.4s linear infinite;
 }
 
-.th-grid-bg {
+/* ============================================================================
+   Environment textures
+   ========================================================================= */
+
+.th-grid-void {
   background-image:
-    linear-gradient(to right, rgba(255, 255, 255, 0.045) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
-  background-size: 56px 56px;
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 72px 72px;
 }
 
-.th-dot-bg {
-  background-image: radial-gradient(circle at 1px 1px, var(--color-ink-200) 1px, transparent 0);
-  background-size: 24px 24px;
+.th-grid-paper {
+  background-image:
+    linear-gradient(to right, rgba(16, 16, 23, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(16, 16, 23, 0.04) 1px, transparent 1px);
+  background-size: 72px 72px;
+}
+
+.th-noise {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.5'/%3E%3C/svg%3E");
+}
+
+/* Masked headline reveal used for editorial titles. */
+.th-line-mask {
+  display: block;
+  overflow: hidden;
+}
+
+/* ============================================================================
+   Range input (calculators)
+   ========================================================================= */
+
+.th-slider {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 22px;
+  background: transparent;
+  cursor: pointer;
+}
+.th-slider::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--accent) 0%,
+    var(--accent) var(--fill),
+    var(--color-ink-200) var(--fill),
+    var(--color-ink-200) 100%
+  );
+}
+.th-slider::-moz-range-track {
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    var(--accent) 0%,
+    var(--accent) var(--fill),
+    var(--color-ink-200) var(--fill),
+    var(--color-ink-200) 100%
+  );
+}
+.th-slider::-webkit-slider-thumb {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -6.5px;
+  border-radius: 999px;
+  background: var(--color-ink-900);
+  border: 3px solid var(--color-paper-50);
+  box-shadow: 0 0 0 1px var(--color-ink-200);
+  transition: transform 160ms var(--ease-out-soft);
+}
+.th-slider::-moz-range-thumb {
+  width: 14px;
+  height: 14px;
+  border: 3px solid var(--color-paper-50);
+  border-radius: 999px;
+  background: var(--color-ink-900);
+  box-shadow: 0 0 0 1px var(--color-ink-200);
+}
+.th-slider:hover::-webkit-slider-thumb,
+.th-slider:focus-visible::-webkit-slider-thumb {
+  transform: scale(1.18);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -179,59 +375,4 @@ body {
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;
   }
-}
-
-/* Range input used by the calculators ---------------------------------- */
-.th-slider {
-  appearance: none;
-  -webkit-appearance: none;
-  height: 22px;
-  background: transparent;
-  cursor: pointer;
-}
-.th-slider::-webkit-slider-runnable-track {
-  height: 6px;
-  border-radius: 999px;
-  background: linear-gradient(
-    to right,
-    var(--accent) 0%,
-    var(--accent) var(--fill),
-    var(--color-ink-100) var(--fill),
-    var(--color-ink-100) 100%
-  );
-}
-.th-slider::-moz-range-track {
-  height: 6px;
-  border-radius: 999px;
-  background: linear-gradient(
-    to right,
-    var(--accent) 0%,
-    var(--accent) var(--fill),
-    var(--color-ink-100) var(--fill),
-    var(--color-ink-100) 100%
-  );
-}
-.th-slider::-webkit-slider-thumb {
-  appearance: none;
-  -webkit-appearance: none;
-  width: 20px;
-  height: 20px;
-  margin-top: -7px;
-  border-radius: 999px;
-  background: #fff;
-  border: 2px solid var(--accent);
-  box-shadow: 0 2px 8px rgba(11, 18, 32, 0.18);
-  transition: transform 150ms var(--ease-out-soft);
-}
-.th-slider::-moz-range-thumb {
-  width: 18px;
-  height: 18px;
-  border: 2px solid var(--accent);
-  border-radius: 999px;
-  background: #fff;
-  box-shadow: 0 2px 8px rgba(11, 18, 32, 0.18);
-}
-.th-slider:hover::-webkit-slider-thumb,
-.th-slider:focus-visible::-webkit-slider-thumb {
-  transform: scale(1.12);
 }

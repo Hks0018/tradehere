@@ -1,9 +1,10 @@
 import type { ReactNode } from "react";
+import { cn } from "@/utils/cn";
 import { Disclaimer } from "@/components/ui/DemoDataNote";
 
 /**
- * Shared two-column calculator frame: inputs on the left, results and charts on
- * the right. Collapses to a single column below the large breakpoint.
+ * Two-column calculator frame: inputs on the left against a hairline, results
+ * and charts on the right. No cards — the numbers are the interface.
  */
 export function CalculatorLayout({
   inputs,
@@ -17,15 +18,13 @@ export function CalculatorLayout({
   disclaimer?: string;
 }) {
   return (
-    <div className="space-y-4">
-      <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.35fr)]">
-        <section
-          aria-label="Calculator inputs"
-          className="rounded-card border border-ink-100 bg-white p-5 shadow-soft sm:p-6"
-        >
+    <div className="space-y-16">
+      <div className="grid gap-14 lg:grid-cols-[minmax(0,22rem)_minmax(0,1fr)] lg:gap-20">
+        <section aria-label="Calculator inputs" className="border-t border-ink-900 pt-8">
+          <h2 className="eyebrow mb-8 text-ink-400">Inputs</h2>
           {inputs}
         </section>
-        <section aria-label="Results" className="space-y-4">
+        <section aria-label="Results" className="space-y-14">
           {results}
         </section>
       </div>
@@ -40,6 +39,10 @@ export function CalculatorLayout({
   );
 }
 
+/**
+ * A single headline figure. `brand` marks the answer the user came for, and is
+ * set larger than the supporting numbers.
+ */
 export function ResultCard({
   label,
   value,
@@ -51,19 +54,32 @@ export function ResultCard({
   tone?: "neutral" | "brand" | "up";
   hint?: string;
 }) {
-  const tones = {
-    neutral: "border-ink-100 bg-white",
-    brand: "border-brand-100 bg-brand-50",
-    up: "border-up-100 bg-up-50",
-  } as const;
+  const isPrimary = tone === "brand";
 
   return (
-    <div className={`rounded-card border p-5 shadow-soft ${tones[tone]}`}>
-      <p className="text-xs font-medium uppercase tracking-wider text-ink-500">{label}</p>
-      <p className="tnum mt-2 font-display text-2xl font-semibold tracking-[-0.02em] text-ink-900">
+    <div
+      className={cn(
+        "border-t pt-4",
+        isPrimary ? "border-ink-900" : "border-ink-200",
+      )}
+    >
+      <p
+        className={cn(
+          "eyebrow",
+          isPrimary ? "text-brand-600" : tone === "up" ? "text-up-600" : "text-ink-400",
+        )}
+      >
+        {label}
+      </p>
+      <p
+        className={cn(
+          "tnum mt-4 font-display font-semibold tracking-[-0.03em] text-ink-900",
+          isPrimary ? "text-data-lg" : "text-3xl",
+        )}
+      >
         {value}
       </p>
-      {hint && <p className="mt-1 text-xs text-ink-400">{hint}</p>}
+      {hint && <p className="mt-2 font-mono text-[0.6875rem] text-ink-400">{hint}</p>}
     </div>
   );
 }

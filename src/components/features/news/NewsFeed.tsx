@@ -19,6 +19,10 @@ const CATEGORIES: (NewsCategory | "All")[] = [
   "Personal Finance",
 ];
 
+/**
+ * The newsroom index. Stories are entries in a running list, sized by position
+ * rather than boxed into equal tiles.
+ */
 export function NewsFeed({
   initialArticles,
   initialCategory = "All",
@@ -55,19 +59,19 @@ export function NewsFeed({
           role="tabpanel"
           aria-label="News stories"
           key={category}
-          initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+          initial={reduceMotion ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
-          transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-8"
+          exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
+          transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-12"
         >
           {articles.length === 0 ? (
             <EmptyState title="No stories in this category yet" description="Try another category." />
           ) : (
-            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {articles.map((article) => (
-                <li key={article.id}>
-                  <NewsCard article={article} />
+            <ul className="border-t border-ink-900">
+              {articles.map((article, index) => (
+                <li key={article.id} className="border-b border-ink-100">
+                  <NewsEntry article={article} index={index} />
                 </li>
               ))}
             </ul>
@@ -78,38 +82,49 @@ export function NewsFeed({
   );
 }
 
+export function NewsEntry({ article, index }: { article: NewsArticle; index?: number }) {
+  return (
+    <Link
+      href={`/news/${article.slug}`}
+      className="group/news grid items-baseline gap-x-10 gap-y-3 py-7 lg:grid-cols-[3rem_10rem_minmax(0,1fr)_8rem]"
+    >
+      {typeof index === "number" && (
+        <span className="tnum hidden font-mono text-xs text-ink-300 lg:block">
+          {String(index + 1).padStart(2, "0")}
+        </span>
+      )}
+      <span className="eyebrow text-brand-600">{article.category}</span>
+      <span className="min-w-0">
+        <span className="block font-display text-xl font-semibold leading-snug tracking-[-0.022em] text-ink-900 transition-colors group-hover/news:text-brand-600 sm:text-2xl">
+          {article.title}
+        </span>
+        <span className="mt-2.5 block max-w-2xl leading-relaxed text-ink-600">
+          {article.summary}
+        </span>
+      </span>
+      <span className="font-mono text-[0.6875rem] text-ink-400 lg:text-right">
+        {formatRelative(article.publishedAt, DATA_REFERENCE_DATE)}
+        <span className="mt-1 block">{article.readMinutes} min read</span>
+      </span>
+    </Link>
+  );
+}
+
+/** Compact card used where a grid genuinely helps (related stories). */
 export function NewsCard({ article }: { article: NewsArticle }) {
   return (
     <Link
       href={`/news/${article.slug}`}
-      className="group flex h-full flex-col overflow-hidden rounded-card border border-ink-100 bg-white shadow-soft transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:shadow-lift"
+      className="group/card flex h-full flex-col border-t border-ink-200 pt-4 transition-colors hover:border-ink-900"
     >
-      <div
-        className="relative h-28 overflow-hidden"
-        style={{ background: `linear-gradient(135deg, ${article.accent}22, ${article.accent}06)` }}
-      >
-        <span
-          aria-hidden
-          className="absolute -right-8 -top-8 size-28 rounded-full opacity-20 blur-2xl transition-transform duration-500 group-hover:scale-125"
-          style={{ background: article.accent }}
-        />
-        <span className="absolute bottom-3 left-4 rounded-pill bg-white/90 px-2.5 py-1 text-xs font-medium text-ink-700 backdrop-blur">
-          {article.category}
-        </span>
-      </div>
-      <div className="flex flex-1 flex-col p-5">
-        <h3 className="text-[0.9375rem] font-semibold leading-snug text-ink-900 group-hover:text-brand-700">
-          {article.title}
-        </h3>
-        <p className="mt-2 flex-1 text-sm leading-relaxed text-ink-500">{article.summary}</p>
-        <p className="mt-4 flex items-center gap-2 text-xs text-ink-400">
-          <span>{article.source}</span>
-          <span aria-hidden>·</span>
-          <span>{formatRelative(article.publishedAt, DATA_REFERENCE_DATE)}</span>
-          <span aria-hidden>·</span>
-          <span>{article.readMinutes} min read</span>
-        </p>
-      </div>
+      <span className="eyebrow text-brand-600">{article.category}</span>
+      <span className="mt-3 font-display text-lg font-semibold leading-snug text-ink-900 transition-colors group-hover/card:text-brand-600">
+        {article.title}
+      </span>
+      <span className="mt-3 flex-1 text-sm leading-relaxed text-ink-500">{article.summary}</span>
+      <span className="mt-5 font-mono text-[0.6875rem] text-ink-400">
+        {formatRelative(article.publishedAt, DATA_REFERENCE_DATE)} · {article.readMinutes} min
+      </span>
     </Link>
   );
 }

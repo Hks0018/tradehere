@@ -88,3 +88,62 @@ export async function getRelatedStocks(symbol: string, limit = 4): Promise<Stock
   if (!stock) return [];
   return STOCKS.filter((s) => s.sector === stock.sector && s.symbol !== stock.symbol).slice(0, limit);
 }
+
+export interface StockStory {
+  verdict: string;
+  paragraphs: string[];
+  sectorChange: number;
+  benchmarkChange: number;
+}
+
+/**
+ * A plain-language reading of the day for one company, composed from the same
+ * figures shown elsewhere on the page — the stock against its sector, and the
+ * sector against the benchmark. Phase 2 can replace the body with a richer
+ * model without changing the shape the UI consumes.
+ */
+export async function getStockStory(symbol: string): Promise<StockStory | undefined> {
+  const stock = await getStockBySymbol(symbol);
+  if (!stock) return undefined;
+
+  const { getIndexById, getSectors } = await import("./marketService");
+  const [sectors, benchmark] = await Promise.all([getSectors(), getIndexById("nifty-50")]);
+
+  const sector = sectors.find((s) => s.name === stock.sector);
+  const sectorChange = sector?.changePercent ?? 0;
+  const benchmarkChange = benchmark?.changePercent ?? 0;
+
+  const vsBenchmark = stock.changePercent - benchmarkChange;
+  const vsSector = stock.changePercent - sectorChange;
+
+  const verdict =
+    vsBenchmark > 0.75
+      ? "Outperforming the benchmark"
+      : vsBenchmark < -0.75
+        ? "Lagging the benchmark"
+        : "Broadly tracking the benchmark";
+
+  const direction = stock.changePercent >= 0 ? "higher" : "lower";
+  const sectorDirection = sectorChange >= 0 ? "advanced" : "declined";
+
+  const paragraphs = [
+    `${stock.name} closed ${direction} in the sample session, moving ${Math.abs(
+      stock.changePercent,
+    ).toFixed(2)}% against a benchmark that ${
+      benchmarkChange >= 0 ? "gained" : "fell"
+    } ${Math.abs(benchmarkChange).toFixed(2)}%. Its sector, ${stock.sector.toLowerCase()}, ${sectorDirection} ${Math.abs(
+      sectorChange,
+    ).toFixed(2)}% overall, so the move is ${
+      Math.abs(vsSector) < 0.5 ? "in line with" : vsSector > 0 ? "stronger than" : "weaker than"
+    } its peers.`,
+    `The company trades at ${stock.pe.toFixed(1)} times earnings on a book value of ₹${stock.bookValue.toFixed(
+      0,
+    )} per share, with a return on equity of ${stock.roe.toFixed(1)}% and a debt-to-equity ratio of ${stock.debtToEquity.toFixed(
+      2,
+    )}. Revenue grew ${stock.revenueGrowth.toFixed(1)}% in the most recent year and profit ${stock.profitGrowth.toFixed(
+      1,
+    )}%.`,
+  ];
+
+  return { verdict, paragraphs, sectorChange, benchmarkChange };
+}

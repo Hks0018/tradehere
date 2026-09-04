@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
 import { notFound } from "next/navigation";
 import { EmiCalculator } from "@/components/calculators/EmiCalculator";
 import { PageHeader } from "@/components/ui/PageHeader";
@@ -18,17 +17,21 @@ export default async function Page() {
 
   return (
     <>
-      <PageHeader eyebrow="Financial tools" title={meta.name} description={meta.description} showDemoBadge={false}>
+      <PageHeader eyebrow="Financial tools" title={meta.name.replace(" Calculator", " calculator.")} description={meta.description} showDemoBadge={false}>
         <nav aria-label="Breadcrumb">
-          <ol className="flex items-center gap-1 text-sm text-ink-400">
-            <li><Link href="/tools" className="transition-colors hover:text-ink-700">All tools</Link></li>
-            <li aria-hidden><ChevronRight className="size-3.5" /></li>
-            <li aria-current="page" className="font-medium text-ink-700">{meta.name}</li>
+          <ol className="eyebrow flex items-center gap-2 text-ink-400">
+            <li>
+              <Link href="/tools" className="transition-colors hover:text-ink-900">
+                All tools
+              </Link>
+            </li>
+            <li aria-hidden>/</li>
+            <li aria-current="page" className="text-ink-700">{meta.name}</li>
           </ol>
         </nav>
       </PageHeader>
 
-      <section className="py-12 sm:py-16">
+      <section className="section-y bg-white">
         <div className="container-page">
           <Reveal>
             <EmiCalculator />

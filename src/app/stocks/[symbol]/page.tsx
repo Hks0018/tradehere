@@ -1,19 +1,26 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronRight } from "lucide-react";
 import { StockChartPanel } from "@/components/features/stocks/StockChartPanel";
 import { StockTabs } from "@/components/features/stocks/StockTabs";
 import { StockCard } from "@/components/market/StockCard";
 import { AnimatedNumber } from "@/components/ui/AnimatedNumber";
-import { Badge, ChangeBadge } from "@/components/ui/Badge";
-import { DemoBadge, Disclaimer } from "@/components/ui/DemoDataNote";
+import { Band } from "@/components/ui/Band";
+import { Delta } from "@/components/ui/Delta";
+import { Disclaimer } from "@/components/ui/DemoDataNote";
+import { Eyebrow } from "@/components/ui/Eyebrow";
+import { MaskedHeading } from "@/components/ui/MaskedHeading";
 import { Reveal } from "@/components/ui/Reveal";
 import { Stat, StatGrid } from "@/components/ui/Stat";
+import { ArrowLink } from "@/components/ui/Button";
 import { getNewsByTicker } from "@/services/newsService";
-import { getRelatedStocks, getStockBySymbol, getStockSymbols } from "@/services/stockService";
-import { cn } from "@/utils/cn";
-import { formatCompactCurrency, formatCurrency, formatSigned, trendClass } from "@/utils/format";
+import {
+  getRelatedStocks,
+  getStockBySymbol,
+  getStockStory,
+  getStockSymbols,
+} from "@/services/stockService";
+import { formatCompactCurrency, formatCurrency, formatSigned } from "@/utils/format";
 
 interface PageProps {
   params: Promise<{ symbol: string }>;
@@ -39,108 +46,152 @@ export default async function StockDetailPage({ params }: PageProps) {
   const stock = await getStockBySymbol(symbol);
   if (!stock) notFound();
 
-  const [related, news] = await Promise.all([
+  const [related, news, story] = await Promise.all([
     getRelatedStocks(stock.symbol),
     getNewsByTicker(stock.symbol),
+    getStockStory(stock.symbol),
   ]);
 
   return (
     <>
-      <header className="border-b border-ink-100 bg-ink-50/60 pt-26 pb-8 sm:pt-30">
+      {/* The company, at scale */}
+      <Band as="header" env="void" grid marksNavDark className="pt-32 pb-14 sm:pt-36">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-[8%] -top-1/2 -z-10 size-[34rem] rounded-full bg-brand-600/15 blur-[140px]"
+        />
         <div className="container-page">
-          <nav aria-label="Breadcrumb" className="mb-6">
-            <ol className="flex flex-wrap items-center gap-1 text-sm text-ink-400">
-              <li><Link href="/stocks" className="transition-colors hover:text-ink-700">Stocks</Link></li>
-              <li aria-hidden><ChevronRight className="size-3.5" /></li>
-              <li><Link href={`/stocks?category=all`} className="transition-colors hover:text-ink-700">{stock.sector}</Link></li>
-              <li aria-hidden><ChevronRight className="size-3.5" /></li>
-              <li aria-current="page" className="font-medium text-ink-700">{stock.symbol}</li>
+          <nav aria-label="Breadcrumb" className="mb-10">
+            <ol className="eyebrow flex flex-wrap items-center gap-2 text-paper-300/50">
+              <li>
+                <Link href="/stocks" className="transition-colors hover:text-paper-50">
+                  Stocks
+                </Link>
+              </li>
+              <li aria-hidden>/</li>
+              <li>{stock.sector}</li>
+              <li aria-hidden>/</li>
+              <li aria-current="page" className="text-paper-100">
+                {stock.symbol}
+              </li>
             </ol>
           </nav>
 
-          <Reveal>
-            <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
-              <div className="flex items-start gap-4">
-                <span className="flex size-14 shrink-0 items-center justify-center rounded-2xl bg-white text-sm font-bold tracking-tight text-ink-600 shadow-soft">
-                  {stock.symbol.slice(0, 3)}
-                </span>
-                <div className="min-w-0">
-                  <h1 className="font-display text-2xl font-semibold tracking-[-0.02em] text-ink-900 sm:text-3xl">
-                    {stock.name}
-                  </h1>
-                  <div className="mt-2 flex flex-wrap items-center gap-2">
-                    <Badge tone="outline" className="bg-white">{stock.symbol} · {stock.exchange}</Badge>
-                    <Badge tone="neutral">{stock.sector}</Badge>
-                    <Badge tone="neutral">{stock.capBucket}</Badge>
-                    <DemoBadge />
-                  </div>
-                </div>
-              </div>
+          <div className="grid gap-10 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] lg:items-end lg:gap-16">
+            <div>
+              <MaskedHeading
+                as="h1"
+                lines={[stock.name]}
+                className="font-display text-display-2 text-paper-50 text-balance-tight"
+              />
+              <Reveal delay={0.18} y={12}>
+                <p className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-paper-300/55">
+                  <span>{stock.symbol} · {stock.exchange}</span>
+                  <span aria-hidden>—</span>
+                  <span>{stock.industry}</span>
+                  <span aria-hidden>—</span>
+                  <span>{stock.capBucket}</span>
+                </p>
+              </Reveal>
+            </div>
 
-              <div className="sm:text-right">
-                <p className="tnum font-display text-3xl font-semibold tracking-[-0.02em] text-ink-900 sm:text-4xl">
+            <Reveal delay={0.24} y={16}>
+              <div className="border-t border-paper-200/15 pt-6 lg:text-right">
+                <p className="tnum font-display text-data-xl font-semibold text-paper-50">
                   <AnimatedNumber value={stock.price} prefix="₹" />
                 </p>
-                <div className="mt-2 flex items-center gap-2 sm:justify-end">
-                  <span className={cn("tnum text-sm font-medium", trendClass(stock.change))}>
+                <p className="mt-3 flex flex-wrap items-baseline gap-4 lg:justify-end">
+                  <span className="tnum font-mono text-sm text-paper-200/70">
                     {formatSigned(stock.change)}
                   </span>
-                  <ChangeBadge value={stock.changePercent} />
-                </div>
-                <p className="mt-1.5 text-xs text-ink-400">Sample close · not a live quote</p>
+                  <Delta value={stock.changePercent} size="lg" onVoid />
+                </p>
+                <p className="eyebrow mt-4 text-paper-300/45">Sample close · not a live quote</p>
               </div>
-            </div>
-          </Reveal>
+            </Reveal>
+          </div>
         </div>
-      </header>
+      </Band>
 
-      <section className="py-10 sm:py-12">
-        <div className="container-page space-y-4">
-          <Reveal>
+      {/* The chart is the workspace */}
+      <section className="section-y-sm bg-white">
+        <div className="container-page">
+          <Reveal y={18}>
             <StockChartPanel stock={stock} />
           </Reveal>
+        </div>
+      </section>
 
-          <Reveal delay={0.06}>
-            <div className="rounded-card border border-ink-100 bg-white p-5 shadow-soft sm:p-6">
-              <h2 className="mb-5 text-base font-semibold text-ink-900">Key metrics</h2>
-              <StatGrid columns={4} className="sm:grid-cols-3 lg:grid-cols-5">
-                <Stat label="Market Cap" value={formatCompactCurrency(stock.marketCap)} />
-                <Stat label="P/E Ratio" value={stock.pe.toFixed(2)} />
-                <Stat label="EPS" value={formatCurrency(stock.eps)} />
-                <Stat label="52W High" value={formatCurrency(stock.high52)} />
-                <Stat label="52W Low" value={formatCurrency(stock.low52)} />
-              </StatGrid>
+      {/* The story today */}
+      {story && (
+        <Band env="paper" className="section-y-sm">
+          <div className="container-page">
+            <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.5fr)] lg:gap-20">
+              <div>
+                <Eyebrow>The story today</Eyebrow>
+                <MaskedHeading
+                  lines={story.verdict.split(" the ").length > 1
+                    ? [story.verdict.split(" the ")[0], `the ${story.verdict.split(" the ")[1]}`]
+                    : [story.verdict]}
+                  className="mt-6 font-display text-display-3 text-ink-900 text-balance-tight"
+                />
+              </div>
+              <Reveal delay={0.15} y={14}>
+                <div className="space-y-5 border-t border-ink-900 pt-6">
+                  {story.paragraphs.map((paragraph, i) => (
+                    <p key={i} className="text-lg leading-relaxed text-ink-700">
+                      {paragraph}
+                    </p>
+                  ))}
+                </div>
+              </Reveal>
             </div>
+          </div>
+        </Band>
+      )}
+
+      {/* Key numbers */}
+      <section className="section-y-sm bg-white">
+        <div className="container-page">
+          <Eyebrow>Key numbers</Eyebrow>
+          <Reveal delay={0.1} y={16}>
+            <StatGrid columns={4} className="mt-8 sm:grid-cols-3 lg:grid-cols-5">
+              <Stat label="Market cap" value={formatCompactCurrency(stock.marketCap)} />
+              <Stat label="P/E ratio" value={stock.pe.toFixed(2)} />
+              <Stat label="EPS" value={formatCurrency(stock.eps)} />
+              <Stat label="52-week high" value={formatCurrency(stock.high52)} />
+              <Stat label="52-week low" value={formatCurrency(stock.low52)} />
+            </StatGrid>
           </Reveal>
 
-          <Reveal delay={0.1}>
+          <Reveal delay={0.16} y={16} className="mt-20">
             <StockTabs stock={stock} news={news} />
           </Reveal>
         </div>
       </section>
 
       {related.length > 0 && (
-        <section className="border-t border-ink-100 bg-ink-50/50 py-14">
+        <Band env="paper" className="section-y-sm">
           <div className="container-page">
-            <div className="flex items-end justify-between gap-4">
+            <div className="flex flex-wrap items-end justify-between gap-6">
               <div>
-                <h2 className="font-display text-xl font-semibold text-ink-900">
-                  Other {stock.sector} companies
+                <Eyebrow>Same sector</Eyebrow>
+                <h2 className="mt-5 font-display text-display-3 font-semibold text-ink-900">
+                  Other {stock.sector.toLowerCase()} companies
                 </h2>
-                <p className="mt-1 text-sm text-ink-500">Peers from the same sector in the sample universe.</p>
               </div>
-              <Link href="/stocks" className="shrink-0 text-sm font-medium text-brand-600 hover:text-brand-700">
-                View all →
-              </Link>
+              <ArrowLink href="/stocks">All stocks</ArrowLink>
             </div>
-            <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+
+            <div className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
               {related.map((peer) => (
-                <StockCard key={peer.symbol} stock={peer} className="h-full" />
+                <StockCard key={peer.symbol} stock={peer} />
               ))}
             </div>
-            <Disclaimer className="mt-10 bg-white" />
+
+            <Disclaimer className="mt-16" />
           </div>
-        </section>
+        </Band>
       )}
     </>
   );

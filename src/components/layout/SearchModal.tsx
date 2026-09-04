@@ -12,12 +12,12 @@ import { cn } from "@/utils/cn";
 import { trendClass } from "@/utils/format";
 
 const TYPE_META: Record<SearchResultType, { label: string; icon: typeof LineChart; tone: string }> = {
-  stock: { label: "Stock", icon: LineChart, tone: "text-brand-600 bg-brand-50" },
-  fund: { label: "Fund", icon: Layers, tone: "text-up-600 bg-up-50" },
-  ipo: { label: "IPO", icon: Rocket, tone: "text-down-600 bg-down-50" },
-  article: { label: "News", icon: Newspaper, tone: "text-gold-600 bg-gold-100" },
-  learn: { label: "Learn", icon: BookOpen, tone: "text-teal-500 bg-ink-50" },
-  tool: { label: "Tool", icon: Calculator, tone: "text-ink-600 bg-ink-50" },
+  stock: { label: "Stock", icon: LineChart, tone: "text-brand-600" },
+  fund: { label: "Fund", icon: Layers, tone: "text-up-600" },
+  ipo: { label: "IPO", icon: Rocket, tone: "text-down-600" },
+  article: { label: "News", icon: Newspaper, tone: "text-gold-600" },
+  learn: { label: "Learn", icon: BookOpen, tone: "text-teal-500" },
+  tool: { label: "Tool", icon: Calculator, tone: "text-ink-500" },
 };
 
 export function SearchModal({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -88,8 +88,8 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
       <h2 id="search-heading" className="sr-only">
         Search the platform
       </h2>
-      <div className="flex items-center gap-3 border-b border-ink-100 px-4 py-3.5">
-        <Search className="size-4.5 shrink-0 text-ink-400" aria-hidden />
+      <div className="flex items-center gap-3.5 border-b border-ink-200 px-5 py-4">
+        <Search className="size-5 shrink-0 text-ink-300" aria-hidden />
         <input
           ref={inputRef}
           value={query}
@@ -101,21 +101,19 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
           aria-controls="search-results"
           aria-autocomplete="list"
           placeholder="Search stocks, funds, IPOs, news and lessons"
-          className="w-full bg-transparent text-[0.9375rem] text-ink-900 outline-none placeholder:text-ink-400"
+          className="w-full bg-transparent font-display text-lg font-medium tracking-[-0.02em] text-ink-900 outline-none placeholder:font-sans placeholder:text-base placeholder:font-normal placeholder:text-ink-400"
         />
-        <kbd className="hidden shrink-0 rounded-md border border-ink-200 bg-ink-50 px-1.5 py-0.5 text-[0.6875rem] font-medium text-ink-400 sm:block">
+        <kbd className="hidden shrink-0 rounded border border-ink-200 px-1.5 py-0.5 font-mono text-[0.625rem] text-ink-400 sm:block">
           Esc
         </kbd>
       </div>
 
-      <div id="search-results" role="listbox" className="max-h-[min(26rem,60vh)] overflow-y-auto p-2">
+      <div id="search-results" role="listbox" className="max-h-[min(26rem,60vh)] overflow-y-auto py-2">
         {!query.trim() && (
-          <p className="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-ink-400">
-            Suggested
-          </p>
+          <p className="eyebrow px-4 py-2.5 text-ink-400">Suggested</p>
         )}
         {visible.length === 0 ? (
-          <div className="px-3 py-10 text-center">
+          <div className="px-5 py-12 text-center">
             <p className="text-sm font-medium text-ink-700">No matches for “{query}”</p>
             <p className="mt-1 text-sm text-ink-400">
               Try a company name, a fund category, or a topic like “diversification”.
@@ -136,26 +134,29 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
                     onMouseEnter={() => setActiveIndex(index)}
                     onClick={() => go(result)}
                     className={cn(
-                      "flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left transition-colors",
-                      active ? "bg-ink-50" : "hover:bg-ink-50/70",
+                      "flex w-full items-center gap-3.5 border-l-2 px-4 py-3 text-left transition-colors",
+                      active ? "border-ink-900 bg-paper-100" : "border-transparent hover:bg-paper-100/60",
                     )}
                   >
-                    <span className={cn("flex size-8 shrink-0 items-center justify-center rounded-lg", meta.tone)}>
+                    <span className={cn("flex size-5 shrink-0 items-center justify-center", meta.tone)}>
                       <MetaIcon className="size-4" aria-hidden />
                     </span>
                     <span className="min-w-0 flex-1">
-                      <span className="block truncate text-sm font-medium text-ink-900">
+                      <span className="block truncate text-[0.9375rem] font-medium text-ink-900">
                         {result.title}
                       </span>
-                      <span className="block truncate text-xs text-ink-400">{result.subtitle}</span>
+                      <span className="mt-0.5 block truncate font-mono text-[0.6875rem] text-ink-400">
+                        {result.subtitle}
+                      </span>
                     </span>
                     {result.meta && (
-                      <span className="tnum hidden shrink-0 text-sm font-medium text-ink-700 sm:block">
+                      <span className="tnum hidden shrink-0 font-mono text-sm text-ink-700 sm:block">
                         {result.meta}
                       </span>
                     )}
                     {typeof result.trend === "number" && (
-                      <span className={cn("tnum shrink-0 text-xs font-semibold", trendClass(result.trend))}>
+                      <span className={cn("tnum shrink-0 font-mono text-xs", trendClass(result.trend))}>
+                        <span aria-hidden>{result.trend > 0 ? "↑" : "↓"}</span>{" "}
                         {result.trend > 0 ? "+" : ""}
                         {result.trend.toFixed(2)}%
                       </span>
@@ -169,12 +170,12 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
         )}
       </div>
 
-      <footer className="flex items-center justify-between border-t border-ink-100 bg-ink-50/60 px-4 py-2.5 text-[0.6875rem] text-ink-400">
-        <span className="flex items-center gap-3">
+      <footer className="eyebrow flex items-center justify-between border-t border-ink-200 px-5 py-3 text-ink-400">
+        <span className="flex items-center gap-4">
           <span>↑↓ navigate</span>
           <span>↵ open</span>
         </span>
-        <span>Searching sample data</span>
+        <span>Sample data</span>
       </footer>
     </Modal>
   );

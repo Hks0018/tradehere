@@ -30,13 +30,16 @@ export default async function MutualFundsPage({
     <>
       <PageHeader
         eyebrow="Mutual funds"
-        title="Compare schemes on the same terms"
-        description="Equity, debt, hybrid and index funds side by side — returns, risk level, fund size and cost, presented identically so comparison is straightforward."
-      />
+        title={["Compare schemes", "on the same terms."]}
+        description="Eighteen schemes across equity, debt, hybrid and index strategies — ranked by the return you care about, with cost and risk always in view."
+      >
+        <p className="eyebrow text-ink-400">{funds.length} schemes</p>
+        <p className="eyebrow text-ink-400">{filters.houses.length} fund houses</p>
+      </PageHeader>
 
-      <section className="py-12 sm:py-16">
+      <section className="section-y bg-white">
         <div className="container-page">
-          <Reveal>
+          <Reveal y={18}>
             <FundExplorer
               initialFunds={funds}
               categories={[...filters.categories]}
@@ -46,7 +49,7 @@ export default async function MutualFundsPage({
           </Reveal>
 
           <Disclaimer
-            className="mt-10"
+            className="mt-16"
             text="Fund names, NAVs, returns and fund sizes shown here are fictional sample data created for this demonstration. They do not describe real schemes. Mutual fund investments are subject to market risks; read all scheme-related documents carefully."
           />
         </div>

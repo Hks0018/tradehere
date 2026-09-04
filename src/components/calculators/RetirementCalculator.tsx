@@ -112,7 +112,7 @@ export function RetirementCalculator() {
       }
       results={
         <>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-8 sm:grid-cols-3">
             <ResultCard
               label="Corpus required"
               value={<AnimatedNumber value={result.corpusRequired} decimals={0} prefix="₹" />}
@@ -138,8 +138,8 @@ export function RetirementCalculator() {
           </div>
 
           <div
-            className={`flex items-start gap-3 rounded-card border p-5 ${
-              onTrack ? "border-up-100 bg-up-50" : "border-gold-100 bg-amber-soft"
+            className={`flex items-start gap-4 border-t-2 pt-5 ${
+              onTrack ? "border-up-500" : "border-gold-500"
             }`}
           >
             {onTrack ? (

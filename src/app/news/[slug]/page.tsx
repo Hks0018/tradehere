@@ -1,15 +1,18 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronRight } from "lucide-react";
 import { NewsCard } from "@/components/features/news/NewsFeed";
-import { Badge } from "@/components/ui/Badge";
-import { DemoBadge, Disclaimer } from "@/components/ui/DemoDataNote";
+import { Band } from "@/components/ui/Band";
+import { Delta } from "@/components/ui/Delta";
+import { Disclaimer } from "@/components/ui/DemoDataNote";
+import { Eyebrow } from "@/components/ui/Eyebrow";
+import { MaskedHeading } from "@/components/ui/MaskedHeading";
 import { Reveal } from "@/components/ui/Reveal";
+import { ArrowLink } from "@/components/ui/Button";
 import { getArticleBySlug, getNewsSlugs, getRelatedNews } from "@/services/newsService";
 import { getStockBySymbol } from "@/services/stockService";
 import { DATA_REFERENCE_DATE } from "@/utils/series";
-import { formatCurrency, formatPercent, formatRelative, trendClass } from "@/utils/format";
+import { formatCurrency, formatRelative } from "@/utils/format";
 import { cn } from "@/utils/cn";
 
 interface PageProps {
@@ -42,16 +45,25 @@ export default async function ArticlePage({ params }: PageProps) {
   return (
     <>
       <article>
-        <header className="border-b border-ink-100 bg-ink-50/60 pt-26 pb-10 sm:pt-30">
-          <div className="container-page max-w-3xl">
-            <nav aria-label="Breadcrumb" className="mb-6">
-              <ol className="flex items-center gap-1 text-sm text-ink-400">
-                <li><Link href="/news" className="transition-colors hover:text-ink-700">News</Link></li>
-                <li aria-hidden><ChevronRight className="size-3.5" /></li>
+        <header className="relative overflow-hidden bg-paper-100 pt-32 pb-12 sm:pt-40">
+          <div
+            aria-hidden
+            className="pointer-events-none absolute -right-[10%] -top-1/3 size-[28rem] rounded-full opacity-20 blur-[110px]"
+            style={{ background: article.accent }}
+          />
+          <div className="container-page relative">
+            <nav aria-label="Breadcrumb" className="mb-10">
+              <ol className="eyebrow flex items-center gap-2 text-ink-400">
+                <li>
+                  <Link href="/news" className="transition-colors hover:text-ink-900">
+                    News
+                  </Link>
+                </li>
+                <li aria-hidden>/</li>
                 <li>
                   <Link
                     href={`/news?category=${encodeURIComponent(article.category)}`}
-                    className="transition-colors hover:text-ink-700"
+                    className="transition-colors hover:text-ink-900"
                   >
                     {article.category}
                   </Link>
@@ -59,40 +71,47 @@ export default async function ArticlePage({ params }: PageProps) {
               </ol>
             </nav>
 
-            <Reveal>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge tone="brand">{article.category}</Badge>
-                <DemoBadge label="Sample Story" />
-              </div>
-              <h1 className="mt-5 font-display text-3xl font-semibold leading-[1.12] tracking-[-0.025em] text-ink-900 text-balance-tight sm:text-4xl">
-                {article.title}
-              </h1>
-              <p className="mt-4 text-base leading-relaxed text-ink-500 sm:text-lg">{article.summary}</p>
-              <p className="mt-6 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm text-ink-400">
-                <span className="font-medium text-ink-600">{article.author}</span>
-                <span aria-hidden>·</span>
-                <span>{article.source}</span>
-                <span aria-hidden>·</span>
-                <time dateTime={article.publishedAt}>
-                  {formatRelative(article.publishedAt, DATA_REFERENCE_DATE)}
-                </time>
-                <span aria-hidden>·</span>
-                <span>{article.readMinutes} min read</span>
-              </p>
-            </Reveal>
+            <div className="max-w-4xl">
+              <MaskedHeading
+                as="h1"
+                lines={[article.title]}
+                className="font-display text-display-3 text-ink-900 text-balance-tight sm:text-display-2"
+              />
+              <Reveal delay={0.18} y={14}>
+                <p className="mt-8 max-w-2xl text-xl leading-relaxed text-ink-600">
+                  {article.summary}
+                </p>
+                <p className="mt-10 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-ink-300 pt-5 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-ink-400">
+                  <span className="text-ink-700">{article.author}</span>
+                  <span aria-hidden>·</span>
+                  <span>{article.source}</span>
+                  <span aria-hidden>·</span>
+                  <time dateTime={article.publishedAt}>
+                    {formatRelative(article.publishedAt, DATA_REFERENCE_DATE)}
+                  </time>
+                  <span aria-hidden>·</span>
+                  <span>{article.readMinutes} min read</span>
+                  <span aria-hidden>·</span>
+                  <span className="flex items-center gap-2 text-gold-600">
+                    <span aria-hidden className="size-1.5 rounded-full bg-gold-500" />
+                    Sample story
+                  </span>
+                </p>
+              </Reveal>
+            </div>
           </div>
         </header>
 
-        <div className="py-12 sm:py-16">
-          <div className="container-page max-w-3xl">
-            <Reveal>
-              <div className="space-y-5">
+        <div className="bg-white py-16 sm:py-20">
+          <div className="container-reading">
+            <Reveal y={14}>
+              <div className="space-y-6">
                 {article.body.map((paragraph, index) => (
                   <p
                     key={index}
                     className={cn(
-                      "leading-[1.75] text-ink-700",
-                      index === 0 && "text-lg leading-[1.7] text-ink-800",
+                      "leading-[1.8] text-ink-700",
+                      index === 0 && "text-xl leading-[1.7] text-ink-900",
                     )}
                   >
                     {paragraph}
@@ -102,29 +121,29 @@ export default async function ArticlePage({ params }: PageProps) {
             </Reveal>
 
             {mentioned.length > 0 && (
-              <Reveal delay={0.06}>
-                <section className="mt-10 rounded-card border border-ink-100 bg-ink-50/60 p-5">
-                  <h2 className="text-sm font-semibold text-ink-900">Companies mentioned</h2>
-                  <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+              <Reveal delay={0.06} y={14}>
+                <section className="mt-14">
+                  <Eyebrow>Companies mentioned</Eyebrow>
+                  <ul className="mt-6 border-t border-ink-900">
                     {mentioned.map((stock) => (
-                      <li key={stock!.symbol}>
+                      <li key={stock!.symbol} className="border-b border-ink-100">
                         <Link
                           href={`/stocks/${stock!.symbol}`}
-                          className="flex items-center justify-between gap-3 rounded-xl bg-white px-4 py-3 shadow-soft transition-colors hover:bg-white/70"
+                          className="group/m flex items-center justify-between gap-6 py-4"
                         >
                           <span className="min-w-0">
-                            <span className="block truncate text-sm font-medium text-ink-900">
+                            <span className="block truncate font-medium text-ink-900 transition-colors group-hover/m:text-brand-600">
                               {stock!.name}
                             </span>
-                            <span className="block text-xs text-ink-400">{stock!.symbol}</span>
+                            <span className="mt-0.5 block font-mono text-[0.6875rem] text-ink-400">
+                              {stock!.symbol}
+                            </span>
                           </span>
-                          <span className="shrink-0 text-right">
-                            <span className="tnum block text-sm font-semibold text-ink-900">
+                          <span className="flex shrink-0 items-baseline gap-5">
+                            <span className="tnum font-mono text-sm text-ink-900">
                               {formatCurrency(stock!.price)}
                             </span>
-                            <span className={cn("tnum block text-xs font-medium", trendClass(stock!.changePercent))}>
-                              {formatPercent(stock!.changePercent)}
-                            </span>
+                            <Delta value={stock!.changePercent} size="sm" className="w-20 justify-end" />
                           </span>
                         </Link>
                       </li>
@@ -134,21 +153,21 @@ export default async function ArticlePage({ params }: PageProps) {
               </Reveal>
             )}
 
-            <Disclaimer className="mt-10" />
+            <Disclaimer className="mt-14" />
           </div>
         </div>
       </article>
 
       {related.length > 0 && (
-        <section className="border-t border-ink-100 bg-ink-50/50 py-14">
+        <Band env="paper" className="section-y-sm">
           <div className="container-page">
-            <div className="flex items-end justify-between gap-4">
-              <h2 className="font-display text-xl font-semibold text-ink-900">More in {article.category}</h2>
-              <Link href="/news" className="shrink-0 text-sm font-medium text-brand-600 hover:text-brand-700">
-                All news →
-              </Link>
+            <div className="flex flex-wrap items-end justify-between gap-6">
+              <h2 className="font-display text-display-3 font-semibold text-ink-900">
+                More in {article.category.toLowerCase()}
+              </h2>
+              <ArrowLink href="/news">All news</ArrowLink>
             </div>
-            <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {related.map((item) => (
                 <li key={item.id}>
                   <NewsCard article={item} />
@@ -156,7 +175,7 @@ export default async function ArticlePage({ params }: PageProps) {
               ))}
             </ul>
           </div>
-        </section>
+        </Band>
       )}
     </>
   );

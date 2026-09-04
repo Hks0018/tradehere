@@ -1,8 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Plus_Jakarta_Sans } from "next/font/google";
+import { Bricolage_Grotesque, Inter, JetBrains_Mono } from "next/font/google";
 import { Footer } from "@/components/layout/Footer";
 import { Navbar } from "@/components/layout/Navbar";
-import { PageTransition } from "@/components/layout/PageTransition";
 import { SearchProvider } from "@/components/layout/SearchProvider";
 import "./globals.css";
 
@@ -12,10 +11,16 @@ const inter = Inter({
   display: "swap",
 });
 
-const display = Plus_Jakarta_Sans({
+const display = Bricolage_Grotesque({
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
   variable: "--font-display",
+  display: "swap",
+});
+
+const monoData = JetBrains_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500", "600"],
+  variable: "--font-mono-data",
   display: "swap",
 });
 
@@ -44,7 +49,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${inter.variable} ${display.variable}`}>
+    <html lang="en" className={`${inter.variable} ${display.variable} ${monoData.variable}`}>
       <head>
         {/* Scroll-reveal sections start hidden; unhide them without JavaScript. */}
         <noscript>
@@ -54,9 +59,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-screen antialiased">
         <SearchProvider>
           <Navbar />
-          <main id="main">
-            <PageTransition>{children}</PageTransition>
-          </main>
+          <main id="main">{children}</main>
           <Footer />
         </SearchProvider>
       </body>

@@ -6,22 +6,20 @@ type Variant = "primary" | "secondary" | "ghost" | "onDark" | "onDarkGhost";
 type Size = "sm" | "md" | "lg";
 
 const BASE =
-  "inline-flex items-center justify-center gap-2 font-medium rounded-pill transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] whitespace-nowrap disabled:opacity-50 disabled:pointer-events-none active:translate-y-px";
+  "group/btn inline-flex items-center justify-center gap-2.5 font-medium rounded-pill transition-[background-color,color,border-color,transform] duration-[220ms] ease-[cubic-bezier(0.22,1,0.36,1)] whitespace-nowrap disabled:opacity-50 disabled:pointer-events-none active:translate-y-px";
 
 const VARIANTS: Record<Variant, string> = {
-  primary:
-    "bg-brand-600 text-white shadow-[0_6px_20px_-6px_rgba(74,63,220,0.65)] hover:bg-brand-700 hover:shadow-[0_10px_28px_-8px_rgba(74,63,220,0.8)]",
-  secondary:
-    "bg-white text-ink-900 border border-ink-200 hover:border-ink-300 hover:bg-ink-50 shadow-soft",
-  ghost: "text-ink-700 hover:text-ink-900 hover:bg-ink-50",
-  onDark: "bg-white text-ink-900 hover:bg-ink-100 shadow-lift",
-  onDarkGhost: "text-white border border-white/25 hover:bg-white/10 hover:border-white/40",
+  primary: "bg-ink-900 text-paper-50 hover:bg-brand-600",
+  secondary: "border border-ink-300 text-ink-900 hover:border-ink-900 hover:bg-ink-900 hover:text-paper-50",
+  ghost: "text-ink-600 hover:text-ink-900",
+  onDark: "bg-paper-50 text-void-950 hover:bg-brand-400 hover:text-void-950",
+  onDarkGhost: "border border-paper-200/25 text-paper-100 hover:border-paper-100 hover:bg-paper-50 hover:text-void-950",
 };
 
 const SIZES: Record<Size, string> = {
-  sm: "h-9 px-4 text-sm",
-  md: "h-11 px-5 text-[0.9375rem]",
-  lg: "h-13 px-7 text-base",
+  sm: "h-9 px-4 text-[0.8125rem]",
+  md: "h-11 px-5 text-sm",
+  lg: "h-14 px-8 text-[0.9375rem]",
 };
 
 interface CommonProps {
@@ -53,5 +51,54 @@ export function Button(props: ButtonProps | AnchorProps) {
     <button className={classes} {...buttonProps}>
       {children}
     </button>
+  );
+}
+
+/**
+ * Inline editorial link: a mono label over a rule that wipes in on hover.
+ * Used instead of secondary buttons throughout the content sections.
+ */
+export function ArrowLink({
+  href,
+  children,
+  onVoid = false,
+  className,
+}: {
+  href: string;
+  children: ReactNode;
+  onVoid?: boolean;
+  className?: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "group/link relative inline-flex items-center gap-2 pb-1.5 text-sm font-medium transition-colors",
+        onVoid ? "text-paper-100 hover:text-brand-300" : "text-ink-900 hover:text-brand-600",
+        className,
+      )}
+    >
+      <span>{children}</span>
+      <span
+        aria-hidden
+        className="transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/link:translate-x-1"
+      >
+        →
+      </span>
+      <span
+        aria-hidden
+        className={cn(
+          "absolute inset-x-0 bottom-0 h-px",
+          onVoid ? "bg-paper-200/30" : "bg-ink-200",
+        )}
+      />
+      <span
+        aria-hidden
+        className={cn(
+          "absolute inset-x-0 bottom-0 h-px origin-left scale-x-0 transition-transform duration-400 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/link:scale-x-100",
+          onVoid ? "bg-brand-300" : "bg-brand-600",
+        )}
+      />
+    </Link>
   );
 }

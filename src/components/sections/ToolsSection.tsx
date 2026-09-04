@@ -1,54 +1,80 @@
 import Link from "next/link";
-import { ArrowUpRight } from "lucide-react";
 import type { CalculatorMeta } from "@/types";
+import { Eyebrow } from "@/components/ui/Eyebrow";
+import { MaskedHeading } from "@/components/ui/MaskedHeading";
+import { Reveal } from "@/components/ui/Reveal";
+import { ArrowLink } from "@/components/ui/Button";
 import { Icon } from "@/components/ui/Icon";
-import { SectionHeading } from "@/components/ui/SectionHeading";
-import { RevealGroup, RevealItem } from "@/components/ui/Reveal";
-import { Button } from "@/components/ui/Button";
 
+/**
+ * The toolkit as a rack of instruments: five vertical columns divided by
+ * hairlines, each one a working calculator rather than a marketing tile.
+ */
 export function ToolsSection({ calculators }: { calculators: CalculatorMeta[] }) {
   return (
-    <section className="py-20 sm:py-24">
+    <section className="section-y bg-white" id="tools">
       <div className="container-page">
-        <SectionHeading
-          eyebrow="Financial tools"
-          title="Numbers you can actually run"
-          description="Every calculator here works. Change an input and the projection, the chart and the year-by-year breakdown update immediately."
-          action={<Button href="/tools" variant="secondary">See all tools</Button>}
-        />
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <Eyebrow index="08">Financial tools</Eyebrow>
+            <MaskedHeading
+              lines={["Your financial", "toolkit."]}
+              className="mt-8 font-display text-display-2 text-ink-900 text-balance-tight"
+            />
+          </div>
+          <Reveal delay={0.12} y={14}>
+            <div className="max-w-sm lg:pb-3">
+              <p className="text-base leading-relaxed text-ink-600">
+                Five working instruments. Change any input and the projection, the chart and the
+                year-by-year breakdown recalculate immediately.
+              </p>
+              <div className="mt-6">
+                <ArrowLink href="/tools">See all tools</ArrowLink>
+              </div>
+            </div>
+          </Reveal>
+        </div>
 
-        <RevealGroup className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {calculators.map((calculator) => (
-            <RevealItem key={calculator.id} className="h-full">
+        <div className="mt-16 grid border-t border-ink-900 sm:grid-cols-2 lg:grid-cols-5">
+          {calculators.map((calculator, index) => (
+            <Reveal key={calculator.id} delay={index * 0.06} y={18} className="block h-full">
               <Link
                 href={`/tools/${calculator.slug}`}
-                className="group relative flex h-full flex-col overflow-hidden rounded-card border border-ink-100 bg-white p-6 shadow-soft transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1 hover:shadow-lift"
+                className="group/tool flex h-full flex-col justify-between gap-10 border-b border-ink-200 py-8 sm:min-h-[19rem] lg:border-b-0 lg:border-r lg:px-6 lg:first:pl-0 lg:last:border-r-0 lg:last:pr-0"
               >
-                <span
-                  aria-hidden
-                  className="absolute inset-x-0 top-0 h-0.5 origin-left scale-x-0 transition-transform duration-400 group-hover:scale-x-100"
-                  style={{ background: calculator.accent }}
-                />
-                <div className="flex items-start justify-between">
-                  <span
-                    className="flex size-11 items-center justify-center rounded-xl"
-                    style={{ background: `${calculator.accent}14`, color: calculator.accent }}
-                  >
-                    <Icon name={calculator.icon} className="size-5" />
-                  </span>
-                  <ArrowUpRight
-                    className="size-4 text-ink-300 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-ink-600"
-                    aria-hidden
-                  />
+                <div>
+                  <div className="flex items-center justify-between">
+                    <span className="tnum font-mono text-[0.6875rem] text-ink-300">
+                      {String(index + 1).padStart(2, "0")}
+                    </span>
+                    <span
+                      className="transition-transform duration-300 group-hover/tool:scale-110"
+                      style={{ color: calculator.accent }}
+                    >
+                      <Icon name={calculator.icon} className="size-[1.125rem]" />
+                    </span>
+                  </div>
+                  <h3 className="mt-6 font-display text-2xl font-semibold leading-[1.05] tracking-[-0.03em] text-ink-900 transition-colors group-hover/tool:text-brand-600">
+                    {calculator.name.replace(" Calculator", "")}
+                  </h3>
+                  <p className="mt-3 text-sm leading-relaxed text-ink-500">{calculator.tagline}</p>
                 </div>
-                <h3 className="mt-5 text-base font-semibold text-ink-900">{calculator.name}</h3>
-                <p className="mt-2 flex-1 text-sm leading-relaxed text-ink-500">
-                  {calculator.description}
-                </p>
+
+                <span className="flex items-center justify-between">
+                  <span className="font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-ink-400">
+                    Calculator
+                  </span>
+                  <span
+                    aria-hidden
+                    className="text-ink-300 transition-all duration-300 group-hover/tool:translate-x-1 group-hover/tool:text-brand-600"
+                  >
+                    →
+                  </span>
+                </span>
               </Link>
-            </RevealItem>
+            </Reveal>
           ))}
-        </RevealGroup>
+        </div>
       </div>
     </section>
   );

@@ -12,9 +12,9 @@ import {
   type StockSortKey,
 } from "@/services/stockService";
 import { Tabs } from "@/components/ui/Tabs";
-import { ChangeBadge } from "@/components/ui/Badge";
+import { Delta } from "@/components/ui/Delta";
 import { Sparkline } from "@/components/ui/Sparkline";
-import { StockCard } from "@/components/market/StockCard";
+import { StockRow } from "@/components/market/StockCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/utils/cn";
@@ -96,14 +96,17 @@ export function StockScreener({
       <div className="flex flex-col gap-4">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
-            <Search className="pointer-events-none absolute left-4 top-1/2 size-4 -translate-y-1/2 text-ink-400" aria-hidden />
+            <Search
+              className="pointer-events-none absolute left-0 top-1/2 size-5 -translate-y-1/2 text-ink-300"
+              aria-hidden
+            />
             <input
               type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by company, symbol or sector"
               aria-label="Search stocks"
-              className="h-12 w-full rounded-pill border border-ink-200 bg-white pl-11 pr-4 text-sm text-ink-900 shadow-soft outline-none transition-colors placeholder:text-ink-400 focus:border-brand-300"
+              className="w-full border-b border-ink-300 bg-transparent py-4 pl-9 pr-4 font-display text-xl font-medium tracking-[-0.02em] text-ink-900 outline-none transition-colors placeholder:font-sans placeholder:text-base placeholder:font-normal placeholder:text-ink-400 focus:border-ink-900 sm:text-2xl"
             />
           </div>
           <button
@@ -111,16 +114,16 @@ export function StockScreener({
             onClick={() => setShowFilters((s) => !s)}
             aria-expanded={showFilters}
             className={cn(
-              "flex h-12 shrink-0 items-center justify-center gap-2 rounded-pill border px-5 text-sm font-medium transition-colors",
+              "flex shrink-0 items-center justify-center gap-2 self-end border-b py-4 text-sm font-medium transition-colors",
               showFilters || activeSectors.length
-                ? "border-brand-200 bg-brand-50 text-brand-700"
-                : "border-ink-200 bg-white text-ink-700 hover:bg-ink-50",
+                ? "border-ink-900 text-ink-900"
+                : "border-ink-300 text-ink-500 hover:text-ink-900",
             )}
           >
             <SlidersHorizontal className="size-4" aria-hidden />
             Filters
             {activeSectors.length > 0 && (
-              <span className="tnum rounded-pill bg-brand-600 px-1.5 text-xs text-white">
+              <span className="tnum font-mono text-xs text-brand-600">
                 {activeSectors.length}
               </span>
             )}
@@ -135,7 +138,7 @@ export function StockScreener({
             onChange={setCategory}
             size="sm"
           />
-          <p className="tnum text-sm text-ink-400">{resultLabel}</p>
+          <p className="tnum eyebrow text-ink-400">{resultLabel}</p>
         </div>
 
         <AnimatePresence initial={false}>
@@ -147,9 +150,9 @@ export function StockScreener({
               transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
               className="overflow-hidden"
             >
-              <div className="rounded-card border border-ink-100 bg-white p-5 shadow-soft">
+              <div className="border-b border-ink-200 py-6">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-ink-900">Sectors</h3>
+                  <h3 className="eyebrow text-ink-400">Filter by sector</h3>
                   {activeSectors.length > 0 && (
                     <button
                       type="button"
@@ -173,8 +176,8 @@ export function StockScreener({
                         className={cn(
                           "rounded-pill border px-3.5 py-1.5 text-sm transition-colors",
                           active
-                            ? "border-brand-300 bg-brand-50 text-brand-700"
-                            : "border-ink-200 text-ink-600 hover:border-ink-300 hover:bg-ink-50",
+                            ? "border-ink-900 bg-ink-900 text-paper-50"
+                            : "border-ink-200 text-ink-600 hover:border-ink-900",
                         )}
                       >
                         {sector}
@@ -211,13 +214,13 @@ export function StockScreener({
       ) : (
         <>
           {/* Desktop / tablet: sortable table */}
-          <div className="mt-8 hidden overflow-hidden rounded-card border border-ink-100 bg-white shadow-soft md:block">
+          <div className="mt-10 hidden md:block">
             <table className="w-full">
               <caption className="sr-only">
                 Sample stock list, sortable by company, price, change, market capitalisation and volume
               </caption>
               <thead>
-                <tr className="border-b border-ink-100 bg-ink-50/60">
+                <tr className="border-y border-ink-900">
                   {COLUMNS.map((column) => {
                     const active = sortKey === column.key;
                     return (
@@ -225,7 +228,7 @@ export function StockScreener({
                         key={column.key}
                         scope="col"
                         aria-sort={active ? (sortDirection === "asc" ? "ascending" : "descending") : "none"}
-                        className={cn("px-4 py-3 text-xs font-semibold uppercase tracking-wider text-ink-500", column.className)}
+                        className={cn("eyebrow px-4 py-3.5 text-ink-400", column.className)}
                       >
                         <button
                           type="button"
@@ -241,42 +244,39 @@ export function StockScreener({
                       </th>
                     );
                   })}
-                  <th scope="col" className="px-4 py-3 text-right text-xs font-semibold uppercase tracking-wider text-ink-500">
+                  <th scope="col" className="eyebrow px-4 py-3.5 text-right text-ink-400">
                     Trend
                   </th>
                 </tr>
               </thead>
               <tbody>
                 {stocks.map((stock) => (
-                  <tr key={stock.symbol} className="group border-b border-ink-100 last:border-0 transition-colors hover:bg-ink-50/70">
-                    <td className="px-4 py-3.5">
+                  <tr key={stock.symbol} className="group border-b border-ink-100 transition-colors hover:bg-paper-100/60">
+                    <td className="px-4 py-4">
                       <Link href={`/stocks/${stock.symbol}`} className="flex items-center gap-3">
-                        <span className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-ink-50 text-[0.6875rem] font-bold text-ink-500">
-                          {stock.symbol.slice(0, 3)}
-                        </span>
                         <span className="min-w-0">
-                          <span className="block truncate text-sm font-medium text-ink-900 group-hover:text-brand-700">
+                          <span className="block truncate text-[0.9375rem] font-medium text-ink-900 group-hover:text-brand-600">
                             {stock.name}
                           </span>
-                          <span className="block truncate text-xs text-ink-400">
+                          <span className="mt-0.5 block truncate font-mono text-[0.6875rem] text-ink-400">
                             {stock.symbol} · {stock.sector}
                           </span>
                         </span>
                       </Link>
                     </td>
-                    <td className="tnum px-4 py-3.5 text-right text-sm font-medium text-ink-900">
+                    <td className="tnum px-4 py-4 text-right font-mono text-sm text-ink-900">
                       {formatCurrency(stock.price)}
                     </td>
-                    <td className="px-4 py-3.5 text-right">
-                      <ChangeBadge value={stock.changePercent} />
+                    <td className="px-4 py-4 text-right">
+                      <Delta value={stock.changePercent} size="sm" className="justify-end" />
                     </td>
-                    <td className="tnum hidden px-4 py-3.5 text-right text-sm text-ink-600 lg:table-cell">
+                    <td className="tnum hidden px-4 py-4 text-right font-mono text-sm text-ink-600 lg:table-cell">
                       {formatCompactCurrency(stock.marketCap)}
                     </td>
-                    <td className="tnum hidden px-4 py-3.5 text-right text-sm text-ink-600 xl:table-cell">
+                    <td className="tnum hidden px-4 py-4 text-right font-mono text-sm text-ink-600 xl:table-cell">
                       {formatCompactNumber(stock.volume)}
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-4 py-4">
                       <div className="flex justify-end">
                         <Sparkline
                           data={stock.series}
@@ -295,17 +295,17 @@ export function StockScreener({
           </div>
 
           {/* Mobile: cards */}
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 md:hidden">
-            {stocks.map((stock) => (
-              <StockCard key={stock.symbol} stock={stock} />
+          <div className="mt-8 border-t border-ink-900 md:hidden">
+            {stocks.map((stock, index) => (
+              <StockRow key={stock.symbol} stock={stock} rank={index + 1} />
             ))}
           </div>
         </>
       )}
 
       {filtersActive && (
-        <p className="mt-4 text-xs text-ink-400">
-          Showing filtered sample data. Figures are illustrative and not live quotes.
+        <p className="mt-6 font-mono text-[0.6875rem] text-ink-400">
+          Showing filtered sample data · figures are illustrative, not live quotes
         </p>
       )}
     </div>

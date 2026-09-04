@@ -1,95 +1,122 @@
-"use client";
-
 import Link from "next/link";
-import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight } from "lucide-react";
-import { useState } from "react";
 import type { EcosystemProduct } from "@/types";
+import { Eyebrow } from "@/components/ui/Eyebrow";
+import { MaskedHeading } from "@/components/ui/MaskedHeading";
+import { Reveal } from "@/components/ui/Reveal";
 import { Icon } from "@/components/ui/Icon";
-import { SectionHeading } from "@/components/ui/SectionHeading";
 import { cn } from "@/utils/cn";
 
 /**
- * Product grid. The hovered card lifts and reveals a soft accent wash driven by
- * each product's own colour token.
+ * Asymmetric ecosystem layout. Stocks takes a full column at display scale;
+ * everything else is a stacked hairline list. Deliberately not a 3×2 card grid.
  */
 export function EcosystemSection({ products }: { products: EcosystemProduct[] }) {
-  const [hovered, setHovered] = useState<string | null>(null);
-  const reduceMotion = useReducedMotion();
+  const [feature, ...others] = products;
 
   return (
-    <section id="ecosystem" className="relative overflow-hidden bg-ink-950 py-20 sm:py-28">
-      <div aria-hidden className="th-grid-bg pointer-events-none absolute inset-0 opacity-60" />
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -top-32 left-1/2 size-[40rem] -translate-x-1/2 rounded-full bg-brand-600/20 blur-[120px]"
-      />
+    <section className="section-y bg-white" id="ecosystem">
+      <div className="container-page">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <Eyebrow index="06">The ecosystem</Eyebrow>
+            <MaskedHeading
+              lines={["One place for every", "financial decision."]}
+              className="mt-8 font-display text-display-2 text-ink-900 text-balance-tight"
+            />
+          </div>
+          <Reveal delay={0.15} y={14}>
+            <p className="max-w-sm text-base leading-relaxed text-ink-600 lg:pb-3">
+              Every product shares one data model and one way of being presented, so moving between
+              them takes no relearning.
+            </p>
+          </Reveal>
+        </div>
 
-      <div className="container-page relative">
-        <SectionHeading
-          onDark
-          align="center"
-          eyebrow="The ecosystem"
-          title="One place for every financial decision."
-          description="Stocks, funds, offerings and instruments — presented consistently, so moving between them takes no relearning."
-        />
-
-        <div className="mt-14 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((product, index) => (
-            <motion.div
-              key={product.id}
-              initial={reduceMotion ? false : { opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
-              transition={{ duration: 0.55, delay: index * 0.06, ease: [0.22, 1, 0.36, 1] }}
-              onMouseEnter={() => setHovered(product.id)}
-              onMouseLeave={() => setHovered(null)}
-            >
+        <div className="mt-16 grid gap-6 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-10">
+          {/* Feature panel */}
+          {feature && (
+            <Reveal y={24}>
               <Link
-                href={product.href}
-                className={cn(
-                  "group relative flex h-full flex-col overflow-hidden rounded-card border border-white/10 bg-white/[0.035] p-6 transition-all duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-1.5 hover:border-white/20 hover:bg-white/[0.06]",
-                )}
+                href={feature.href}
+                className="group/feature relative flex h-full min-h-[26rem] flex-col justify-between overflow-hidden rounded-card bg-void-950 p-8 text-paper-100 sm:p-10"
               >
-                <span
+                <div aria-hidden className="th-grid-void absolute inset-0" />
+                <div
                   aria-hidden
-                  className="pointer-events-none absolute -right-10 -top-10 size-32 rounded-full opacity-0 blur-2xl transition-opacity duration-500 group-hover:opacity-70"
-                  style={{ background: product.accent }}
+                  className="absolute -right-24 -top-24 size-80 rounded-full blur-[90px] transition-transform duration-700 group-hover/feature:scale-125"
+                  style={{ background: `${feature.accent}40` }}
                 />
 
-                <span
-                  className="relative flex size-11 items-center justify-center rounded-xl transition-transform duration-300 group-hover:scale-105"
-                  style={{ background: `${product.accent}22`, color: product.accent }}
-                >
-                  <Icon name={product.icon} className="size-5" />
-                </span>
-
-                <h3 className="relative mt-5 font-display text-lg font-semibold text-white">
-                  {product.name}
-                </h3>
-                <p className="relative mt-2 flex-1 text-sm leading-relaxed text-ink-400">
-                  {product.description}
-                </p>
-
-                <div className="relative mt-6 flex items-end justify-between border-t border-white/10 pt-4">
-                  <div>
-                    <p className="tnum text-xl font-semibold text-white">{product.stat}</p>
-                    <p className="text-xs text-ink-500">{product.statLabel}</p>
-                  </div>
-                  <span className="flex items-center gap-1.5 text-sm font-medium text-ink-300 transition-colors group-hover:text-white">
-                    Explore
-                    <ArrowRight
-                      className={cn(
-                        "size-4 transition-transform duration-300",
-                        hovered === product.id && "translate-x-0.5",
-                      )}
-                      aria-hidden
-                    />
+                <div className="relative flex items-start justify-between">
+                  <span className="eyebrow text-paper-300/50">Explore</span>
+                  <span
+                    aria-hidden
+                    className="text-xl transition-transform duration-400 group-hover/feature:-translate-y-0.5 group-hover/feature:translate-x-0.5"
+                  >
+                    ↗
                   </span>
                 </div>
+
+                <div className="relative">
+                  <h3 className="font-display text-display-2 font-semibold leading-none tracking-[-0.04em] text-paper-50">
+                    {feature.name}
+                  </h3>
+                  <p className="mt-6 max-w-sm text-base leading-relaxed text-paper-200/70">
+                    {feature.description}
+                  </p>
+                  <p className="mt-8 flex items-baseline gap-3 border-t border-paper-200/15 pt-6">
+                    <span className="tnum font-display text-3xl font-semibold text-paper-50">
+                      {feature.stat}
+                    </span>
+                    <span className="font-mono text-xs text-paper-300/55">{feature.statLabel}</span>
+                  </p>
+                </div>
               </Link>
-            </motion.div>
-          ))}
+            </Reveal>
+          )}
+
+          {/* Stacked list */}
+          <ul className="flex flex-col">
+            {others.map((product, index) => (
+              <Reveal key={product.id} delay={0.06 * index} y={16} className="block">
+                <li className="border-t border-ink-200 last:border-b">
+                  <Link
+                    href={product.href}
+                    className="group/item grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-5 py-6"
+                  >
+                    <span
+                      className="flex size-10 items-center justify-center rounded-card transition-transform duration-300 group-hover/item:scale-105"
+                      style={{ background: `${product.accent}14`, color: product.accent }}
+                    >
+                      <Icon name={product.icon} className="size-[1.125rem]" />
+                    </span>
+                    <span className="min-w-0">
+                      <span className="flex flex-wrap items-baseline gap-x-3">
+                        <span className="font-display text-xl font-semibold tracking-[-0.025em] text-ink-900 transition-colors group-hover/item:text-brand-600">
+                          {product.name}
+                        </span>
+                        <span className="tnum font-mono text-[0.6875rem] text-ink-400">
+                          {product.stat} {product.statLabel}
+                        </span>
+                      </span>
+                      <span className="mt-1 block max-w-md text-sm leading-relaxed text-ink-500">
+                        {product.description}
+                      </span>
+                    </span>
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "text-ink-300 transition-all duration-300",
+                        "group-hover/item:translate-x-1 group-hover/item:text-brand-600",
+                      )}
+                    >
+                      →
+                    </span>
+                  </Link>
+                </li>
+              </Reveal>
+            ))}
+          </ul>
         </div>
       </div>
     </section>

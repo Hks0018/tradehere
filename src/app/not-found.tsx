@@ -1,32 +1,55 @@
 import Link from "next/link";
-import { Button } from "@/components/ui/Button";
+import { Band } from "@/components/ui/Band";
+import { Eyebrow } from "@/components/ui/Eyebrow";
+import { MaskedHeading } from "@/components/ui/MaskedHeading";
+import { Reveal } from "@/components/ui/Reveal";
 
 export default function NotFound() {
   return (
-    <section className="flex min-h-[70vh] items-center justify-center px-5 py-24">
-      <div className="text-center">
-        <p className="font-display text-sm font-semibold uppercase tracking-[0.16em] text-brand-600">
-          404
-        </p>
-        <h1 className="mt-4 font-display text-3xl font-semibold tracking-[-0.02em] text-ink-900 sm:text-4xl">
-          We couldn&apos;t find that page
-        </h1>
-        <p className="mx-auto mt-4 max-w-md text-base leading-relaxed text-ink-500">
-          The page may have moved, or the symbol you were looking for is not part of the sample
-          universe.
-        </p>
-        <div className="mt-8 flex flex-col justify-center gap-3 sm:flex-row">
-          <Button href="/">Back to home</Button>
-          <Button href="/markets" variant="secondary">Explore markets</Button>
-        </div>
-        <p className="mt-8 text-sm text-ink-400">
-          Or try the{" "}
-          <Link href="/stocks" className="font-medium text-brand-600 hover:text-brand-700">
-            stock screener
-          </Link>
-          .
-        </p>
+    <Band env="void" grid className="flex min-h-[80svh] items-center">
+      <div
+        aria-hidden
+        className="pointer-events-none absolute left-1/2 top-1/2 -z-10 size-[32rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-600/15 blur-[130px]"
+      />
+      <div className="container-page py-24">
+        <Eyebrow onVoid index="404">Not found</Eyebrow>
+        <MaskedHeading
+          as="h1"
+          lines={["That page isn't", "on the tape."]}
+          className="mt-8 font-display text-display-2 text-paper-50"
+        />
+        <Reveal delay={0.2} y={14}>
+          <p className="mt-8 max-w-lg text-lg leading-relaxed text-paper-200/70">
+            The page may have moved, or the symbol you were looking for is not part of the sample
+            universe.
+          </p>
+
+          <ul className="mt-12 grid max-w-2xl gap-0 border-t border-paper-200/15 sm:grid-cols-3">
+            {[
+              { label: "Home", href: "/" },
+              { label: "Markets", href: "/markets" },
+              { label: "Stock screener", href: "/stocks" },
+            ].map((link) => (
+              <li key={link.href} className="border-b border-paper-200/10 sm:border-b-0">
+                <Link
+                  href={link.href}
+                  className="group/nf flex items-center justify-between gap-4 py-5 sm:pr-8"
+                >
+                  <span className="font-display text-xl font-semibold text-paper-50">
+                    {link.label}
+                  </span>
+                  <span
+                    aria-hidden
+                    className="text-paper-300/50 transition-transform duration-300 group-hover/nf:translate-x-1"
+                  >
+                    →
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </Reveal>
       </div>
-    </section>
+    </Band>
   );
 }

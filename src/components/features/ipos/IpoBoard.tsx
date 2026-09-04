@@ -5,7 +5,7 @@ import { useState } from "react";
 import type { Ipo, IpoStatus } from "@/types";
 import { Tabs } from "@/components/ui/Tabs";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { IpoCard } from "./IpoCard";
+import { IpoEntry } from "./IpoCard";
 
 type Filter = IpoStatus | "All";
 
@@ -20,6 +20,7 @@ export function IpoBoard({ grouped }: { grouped: Record<IpoStatus, Ipo[]> }) {
     <div>
       <Tabs
         ariaLabel="Filter offerings by status"
+        variant="underline"
         options={[
           { value: "Open", label: "Open now", count: grouped.Open.length },
           { value: "Upcoming", label: "Upcoming", count: grouped.Upcoming.length },
@@ -35,11 +36,11 @@ export function IpoBoard({ grouped }: { grouped: Record<IpoStatus, Ipo[]> }) {
           role="tabpanel"
           aria-label="Public offerings"
           key={filter}
-          initial={reduceMotion ? false : { opacity: 0, y: 10 }}
+          initial={reduceMotion ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={reduceMotion ? undefined : { opacity: 0, y: -6 }}
-          transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-          className="mt-8"
+          exit={reduceMotion ? undefined : { opacity: 0, y: -8 }}
+          transition={{ duration: 0.26, ease: [0.16, 1, 0.3, 1] }}
+          className="mt-12"
         >
           {visible.length === 0 ? (
             <EmptyState
@@ -47,13 +48,11 @@ export function IpoBoard({ grouped }: { grouped: Record<IpoStatus, Ipo[]> }) {
               description="Switch to another tab to see offerings that are open, upcoming or recently listed."
             />
           ) : (
-            <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {visible.map((ipo) => (
-                <li key={ipo.id}>
-                  <IpoCard ipo={ipo} />
-                </li>
+            <div>
+              {visible.map((ipo, index) => (
+                <IpoEntry key={ipo.id} ipo={ipo} index={index} />
               ))}
-            </ul>
+            </div>
           )}
         </motion.div>
       </AnimatePresence>

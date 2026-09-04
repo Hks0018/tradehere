@@ -1,15 +1,10 @@
 import type { ReactNode } from "react";
 import { cn } from "@/utils/cn";
 
-interface ChartContainerProps {
-  title?: ReactNode;
-  subtitle?: ReactNode;
-  actions?: ReactNode;
-  children: ReactNode;
-  className?: string;
-  bodyClassName?: string;
-}
-
+/**
+ * Chart frame. A hairline and a label — no border box, no shadow, so the data
+ * itself is the only thing with visual weight.
+ */
 export function ChartContainer({
   title,
   subtitle,
@@ -17,19 +12,26 @@ export function ChartContainer({
   children,
   className,
   bodyClassName,
-}: ChartContainerProps) {
+}: {
+  title?: ReactNode;
+  subtitle?: ReactNode;
+  actions?: ReactNode;
+  children: ReactNode;
+  className?: string;
+  bodyClassName?: string;
+}) {
   return (
-    <section className={cn("rounded-card border border-ink-100 bg-white shadow-soft", className)}>
+    <section className={cn("border-t border-ink-900 pt-5", className)}>
       {(title || actions) && (
-        <header className="flex flex-col gap-3 border-b border-ink-100 px-5 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-6">
+        <header className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-baseline sm:justify-between">
           <div className="min-w-0">
-            {title && <h3 className="text-base font-semibold text-ink-900">{title}</h3>}
-            {subtitle && <p className="mt-0.5 text-sm text-ink-500">{subtitle}</p>}
+            {title && <h3 className="eyebrow text-ink-500">{title}</h3>}
+            {subtitle && <p className="mt-2 text-sm text-ink-600">{subtitle}</p>}
           </div>
           {actions && <div className="shrink-0">{actions}</div>}
         </header>
       )}
-      <div className={cn("p-4 sm:p-5", bodyClassName)}>{children}</div>
+      <div className={bodyClassName}>{children}</div>
     </section>
   );
 }

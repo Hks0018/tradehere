@@ -55,7 +55,7 @@ export function EmiCalculator() {
       }
       results={
         <>
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid gap-8 sm:grid-cols-3">
             <ResultCard
               label="Monthly EMI"
               value={<AnimatedNumber value={result.emi} decimals={0} prefix="₹" />}

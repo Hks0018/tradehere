@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, Flame } from "lucide-react";
 import { NewsFeed } from "@/components/features/news/NewsFeed";
 import { PageHeader } from "@/components/ui/PageHeader";
+import { Band } from "@/components/ui/Band";
+import { Eyebrow } from "@/components/ui/Eyebrow";
 import { Reveal } from "@/components/ui/Reveal";
 import { Disclaimer } from "@/components/ui/DemoDataNote";
-import { Badge } from "@/components/ui/Badge";
 import { getFeaturedArticle, getNews, getTrendingNews } from "@/services/newsService";
 import type { NewsCategory } from "@/types";
 import { DATA_REFERENCE_DATE } from "@/utils/series";
@@ -39,69 +39,64 @@ export default async function NewsPage({
     <>
       <PageHeader
         eyebrow="Market news"
-        title="What happened, and why it matters"
+        title={["What happened,", "and why it matters."]}
         description="Coverage across markets, companies, the economy and personal finance — written to be understood, not decoded."
       />
 
-      <section className="py-12 sm:py-16">
+      {/* Lead story */}
+      <Band env="void" grid className="section-y-sm">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -right-[8%] top-0 -z-10 size-[32rem] rounded-full opacity-25 blur-[130px]"
+          style={{ background: featured.accent }}
+        />
         <div className="container-page">
-          <div className="grid gap-4 lg:grid-cols-[minmax(0,1.65fr)_minmax(0,1fr)]">
-            <Reveal>
-              <Link
-                href={`/news/${featured.slug}`}
-                className="group relative flex h-full flex-col justify-end overflow-hidden rounded-card bg-ink-900 p-7 sm:p-9"
-              >
-                <div aria-hidden className="th-grid-bg absolute inset-0 opacity-50" />
-                <div
-                  aria-hidden
-                  className="absolute -right-24 -top-24 size-72 rounded-full opacity-30 blur-3xl"
-                  style={{ background: featured.accent }}
-                />
-                <div className="relative">
-                  <Badge tone="dark">Featured · {featured.category}</Badge>
-                  <h2 className="mt-5 font-display text-2xl font-semibold leading-tight tracking-[-0.02em] text-white sm:text-3xl">
-                    {featured.title}
-                  </h2>
-                  <p className="mt-4 max-w-xl text-sm leading-relaxed text-ink-300 sm:text-base">
-                    {featured.summary}
-                  </p>
-                  <p className="mt-6 flex items-center gap-2 text-xs text-ink-400">
-                    <span>{featured.author}</span>
-                    <span aria-hidden>·</span>
-                    <span>{formatRelative(featured.publishedAt, DATA_REFERENCE_DATE)}</span>
-                    <span aria-hidden>·</span>
-                    <span>{featured.readMinutes} min read</span>
-                  </p>
-                  <span className="mt-6 inline-flex items-center gap-1.5 text-sm font-medium text-white">
-                    Read the story
-                    <ArrowRight className="size-4 transition-transform duration-300 group-hover:translate-x-0.5" aria-hidden />
-                  </span>
-                </div>
+          <div className="grid gap-12 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)] lg:gap-20">
+            <Reveal y={20}>
+              <Link href={`/news/${featured.slug}`} className="group/lead block">
+                <p className="eyebrow flex items-center gap-3 text-brand-300">
+                  Lead story
+                  <span aria-hidden className="h-px w-8 bg-paper-200/25" />
+                  <span className="text-paper-300/60">{featured.category}</span>
+                </p>
+                <h2 className="mt-7 max-w-3xl font-display text-display-2 font-semibold leading-[0.98] tracking-[-0.038em] text-paper-50 transition-colors group-hover/lead:text-brand-300">
+                  {featured.title}
+                </h2>
+                <p className="mt-7 max-w-2xl text-lg leading-relaxed text-paper-200/70">
+                  {featured.summary}
+                </p>
+                <p className="mt-8 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-paper-300/50">
+                  <span>{featured.author}</span>
+                  <span aria-hidden>·</span>
+                  <time dateTime={featured.publishedAt}>
+                    {formatRelative(featured.publishedAt, DATA_REFERENCE_DATE)}
+                  </time>
+                  <span aria-hidden>·</span>
+                  <span>{featured.readMinutes} min read</span>
+                </p>
               </Link>
             </Reveal>
 
-            <Reveal delay={0.08}>
-              <div className="h-full rounded-card border border-ink-100 bg-white p-5 shadow-soft sm:p-6">
-                <h2 className="flex items-center gap-2 text-base font-semibold text-ink-900">
-                  <Flame className="size-4 text-down-500" aria-hidden />
-                  Trending stories
-                </h2>
-                <ol className="mt-4 space-y-1">
+            <Reveal delay={0.12} y={18}>
+              <div>
+                <Eyebrow onVoid>Trending</Eyebrow>
+                <ol className="mt-6 border-t border-paper-200/15">
                   {trending.map((article, index) => (
-                    <li key={article.id}>
+                    <li key={article.id} className="border-b border-paper-200/10">
                       <Link
                         href={`/news/${article.slug}`}
-                        className="group flex gap-3 rounded-xl px-3 py-3 transition-colors hover:bg-ink-50"
+                        className="group/t flex gap-5 py-4"
                       >
-                        <span className="tnum text-sm font-semibold text-ink-300">
+                        <span className="tnum font-mono text-xs text-paper-300/35">
                           {String(index + 1).padStart(2, "0")}
                         </span>
                         <span className="min-w-0">
-                          <span className="block text-sm font-medium leading-snug text-ink-900 group-hover:text-brand-700">
+                          <span className="block text-[0.9375rem] font-medium leading-snug text-paper-100 transition-colors group-hover/t:text-brand-300">
                             {article.title}
                           </span>
-                          <span className="mt-1 block text-xs text-ink-400">
-                            {article.category} · {formatRelative(article.publishedAt, DATA_REFERENCE_DATE)}
+                          <span className="mt-1.5 block font-mono text-[0.6875rem] text-paper-300/45">
+                            {article.category} ·{" "}
+                            {formatRelative(article.publishedAt, DATA_REFERENCE_DATE)}
                           </span>
                         </span>
                       </Link>
@@ -111,15 +106,20 @@ export default async function NewsPage({
               </div>
             </Reveal>
           </div>
+        </div>
+      </Band>
 
-          <Reveal className="mt-12">
-            <h2 className="sr-only">Latest news</h2>
+      <section className="section-y bg-white">
+        <div className="container-page">
+          <Eyebrow>Latest</Eyebrow>
+          <h2 className="sr-only">Latest news</h2>
+          <Reveal delay={0.08} y={16} className="mt-8">
             <NewsFeed initialArticles={articles} initialCategory={category} />
           </Reveal>
 
           <Disclaimer
-            className="mt-10"
-            text="All stories on this page are sample editorial content written for this demonstration. They do not report real events and are not investment advice."
+            className="mt-16"
+            text="All stories on this site are sample editorial content written for this demonstration. They do not report real events and are not investment advice."
           />
         </div>
       </section>

@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronRight, Clock } from "lucide-react";
 import { LearnCard } from "@/components/features/learning/LearnLibrary";
-import { Badge } from "@/components/ui/Badge";
+import { Band } from "@/components/ui/Band";
 import { Disclaimer } from "@/components/ui/DemoDataNote";
+import { MaskedHeading } from "@/components/ui/MaskedHeading";
 import { Reveal } from "@/components/ui/Reveal";
+import { ArrowLink } from "@/components/ui/Button";
 import { getLearnItemBySlug, getLearnItems, getLearnSlugs } from "@/services/learnService";
 
 interface PageProps {
@@ -29,24 +30,30 @@ export default async function LearnItemPage({ params }: PageProps) {
   const item = await getLearnItemBySlug(slug);
   if (!item) notFound();
 
-  const related = (await getLearnItems({ topic: item.topic })).filter((i) => i.slug !== slug).slice(0, 3);
+  const related = (await getLearnItems({ topic: item.topic }))
+    .filter((i) => i.slug !== slug)
+    .slice(0, 3);
 
   return (
     <>
       <article>
         <header
-          className="border-b border-ink-100 pt-26 pb-10 sm:pt-30"
-          style={{ background: `linear-gradient(160deg, ${item.accent}12, transparent 70%)` }}
+          className="relative overflow-hidden pt-32 pb-12 sm:pt-40"
+          style={{ background: `linear-gradient(170deg, ${item.accent}14, var(--color-paper-100) 65%)` }}
         >
-          <div className="container-page max-w-3xl">
-            <nav aria-label="Breadcrumb" className="mb-6">
-              <ol className="flex items-center gap-1 text-sm text-ink-400">
-                <li><Link href="/learn" className="transition-colors hover:text-ink-700">Learn</Link></li>
-                <li aria-hidden><ChevronRight className="size-3.5" /></li>
+          <div className="container-page relative">
+            <nav aria-label="Breadcrumb" className="mb-10">
+              <ol className="eyebrow flex items-center gap-2 text-ink-400">
+                <li>
+                  <Link href="/learn" className="transition-colors hover:text-ink-900">
+                    Learn
+                  </Link>
+                </li>
+                <li aria-hidden>/</li>
                 <li>
                   <Link
                     href={`/learn?topic=${encodeURIComponent(item.topic)}`}
-                    className="transition-colors hover:text-ink-700"
+                    className="transition-colors hover:text-ink-900"
                   >
                     {item.topic}
                   </Link>
@@ -54,34 +61,42 @@ export default async function LearnItemPage({ params }: PageProps) {
               </ol>
             </nav>
 
-            <Reveal>
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge tone="brand">{item.level}</Badge>
-                <Badge tone="outline" className="bg-white">{item.format}</Badge>
-                <span className="flex items-center gap-1.5 text-xs text-ink-400">
-                  <Clock className="size-3.5" aria-hidden />
-                  {item.minutes} min
-                </span>
-              </div>
-              <h1 className="mt-5 font-display text-3xl font-semibold leading-[1.12] tracking-[-0.025em] text-ink-900 text-balance-tight sm:text-4xl">
-                {item.title}
-              </h1>
-              <p className="mt-4 text-base leading-relaxed text-ink-500 sm:text-lg">{item.excerpt}</p>
-            </Reveal>
+            <div className="max-w-4xl">
+              <MaskedHeading
+                as="h1"
+                lines={[item.title]}
+                className="font-display text-display-2 text-ink-900 text-balance-tight"
+              />
+              <Reveal delay={0.18} y={14}>
+                <p className="mt-8 max-w-2xl text-xl leading-relaxed text-ink-600">{item.excerpt}</p>
+                <p className="mt-10 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-ink-300 pt-5 font-mono text-[0.6875rem] uppercase tracking-[0.14em] text-ink-400">
+                  <span className="text-ink-700">{item.level}</span>
+                  <span aria-hidden>·</span>
+                  <span>{item.format}</span>
+                  <span aria-hidden>·</span>
+                  <span>{item.minutes} min read</span>
+                </p>
+              </Reveal>
+            </div>
           </div>
         </header>
 
-        <div className="py-12 sm:py-16">
-          <div className="container-page max-w-3xl">
+        <div className="bg-white py-16 sm:py-20">
+          <div className="container-reading">
             {item.body.map((section, index) => (
-              <Reveal key={section.heading} delay={index * 0.04} className="mb-10 last:mb-0">
+              <Reveal key={section.heading} delay={index * 0.04} y={14} className="mb-12 block last:mb-0">
                 <section>
-                  <h2 className="font-display text-xl font-semibold tracking-[-0.015em] text-ink-900">
+                  <p className="tnum font-mono text-[0.6875rem] uppercase tracking-[0.16em] text-ink-300">
+                    {String(index + 1).padStart(2, "0")}
+                  </p>
+                  <h2 className="mt-3 font-display text-display-3 font-semibold leading-tight tracking-[-0.03em] text-ink-900">
                     {section.heading}
                   </h2>
-                  <div className="mt-4 space-y-4">
+                  <div className="mt-6 space-y-5">
                     {section.paragraphs.map((paragraph, i) => (
-                      <p key={i} className="leading-[1.75] text-ink-700">{paragraph}</p>
+                      <p key={i} className="text-lg leading-[1.8] text-ink-700">
+                        {paragraph}
+                      </p>
                     ))}
                   </div>
                 </section>
@@ -89,7 +104,7 @@ export default async function LearnItemPage({ params }: PageProps) {
             ))}
 
             <Disclaimer
-              className="mt-12"
+              className="mt-16"
               text="Educational content only. This lesson is not investment, tax or legal advice, and no outcome is promised or guaranteed. Investments are subject to market risks."
             />
           </div>
@@ -97,15 +112,15 @@ export default async function LearnItemPage({ params }: PageProps) {
       </article>
 
       {related.length > 0 && (
-        <section className="border-t border-ink-100 bg-ink-50/50 py-14">
+        <Band env="paper" className="section-y-sm">
           <div className="container-page">
-            <div className="flex items-end justify-between gap-4">
-              <h2 className="font-display text-xl font-semibold text-ink-900">More on {item.topic}</h2>
-              <Link href="/learn" className="shrink-0 text-sm font-medium text-brand-600 hover:text-brand-700">
-                All lessons →
-              </Link>
+            <div className="flex flex-wrap items-end justify-between gap-6">
+              <h2 className="font-display text-display-3 font-semibold text-ink-900">
+                More on {item.topic.toLowerCase()}
+              </h2>
+              <ArrowLink href="/learn">All lessons</ArrowLink>
             </div>
-            <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <ul className="mt-12 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
               {related.map((entry) => (
                 <li key={entry.id}>
                   <LearnCard item={entry} />
@@ -113,7 +128,7 @@ export default async function LearnItemPage({ params }: PageProps) {
               ))}
             </ul>
           </div>
-        </section>
+        </Band>
       )}
     </>
   );

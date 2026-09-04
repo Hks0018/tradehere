@@ -32,7 +32,7 @@ export function CalcField({
   prefix,
   suffix,
   hint,
-  accent,
+  accent = "var(--color-ink-900)",
   formatValue,
 }: CalcFieldProps) {
   const inputId = useId();
@@ -44,16 +44,16 @@ export function CalcField({
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-2">
+      <div className="flex flex-wrap items-baseline justify-between gap-2">
         <label htmlFor={inputId} className="text-sm font-medium text-ink-700">
           {label}
         </label>
         <div
           className={cn(
-            "flex items-center gap-1 rounded-lg border border-ink-200 bg-white px-2.5 py-1.5 transition-colors focus-within:border-brand-300",
+            "flex items-baseline gap-1 border-b border-ink-300 px-1 pb-1 transition-colors focus-within:border-ink-900",
           )}
         >
-          {prefix && <span className="text-sm text-ink-400">{prefix}</span>}
+          {prefix && <span className="font-mono text-sm text-ink-400">{prefix}</span>}
           <input
             id={inputId}
             type="number"
@@ -63,9 +63,9 @@ export function CalcField({
             max={max}
             step={step}
             onChange={(e) => commit(Number(e.target.value))}
-            className="tnum w-24 bg-transparent text-right text-sm font-semibold text-ink-900 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+            className="tnum w-24 bg-transparent text-right font-mono text-base font-medium text-ink-900 outline-none [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
-          {suffix && <span className="text-sm text-ink-400">{suffix}</span>}
+          {suffix && <span className="font-mono text-sm text-ink-400">{suffix}</span>}
         </div>
       </div>
 
@@ -81,9 +81,9 @@ export function CalcField({
         />
       </div>
 
-      <div className="mt-1 flex items-center justify-between text-xs text-ink-400">
+      <div className="mt-1 flex items-center justify-between font-mono text-[0.6875rem] text-ink-400">
         <span className="tnum">{formatValue ? formatValue(min) : `${prefix ?? ""}${min}${suffix ?? ""}`}</span>
-        {hint && <span className="px-2 text-center">{hint}</span>}
+        {hint && <span className="px-2 text-center normal-case">{hint}</span>}
         <span className="tnum">{formatValue ? formatValue(max) : `${prefix ?? ""}${max}${suffix ?? ""}`}</span>
       </div>
     </div>
