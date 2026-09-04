@@ -38,7 +38,7 @@ export default async function StocksPage({
       <PageHeader
         eyebrow="Stocks"
         title={["Discover", "what's moving."]}
-        description="Twenty-eight companies across eleven sectors. Search them, filter them, rank them — then read the ones worth understanding."
+        description="Twenty-eight companies across twelve sectors. Search them, filter them, rank them — then read the ones worth understanding."
       >
         <p className="eyebrow text-ink-400">{stocks.length} companies</p>
         <p className="eyebrow text-ink-400">{sectors.length} sectors</p>

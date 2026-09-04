@@ -1,77 +1,78 @@
+import "server-only";
+
 import { IPOS } from "@/data/ipos";
 import { LEARN_ITEMS } from "@/data/learn";
 import { MUTUAL_FUNDS } from "@/data/mutualFunds";
 import { NEWS } from "@/data/news";
-import { STOCKS } from "@/data/stocks";
 import { CALCULATORS } from "@/data/tools";
+import { marketData } from "@/server/market-data";
 import type { SearchResult } from "@/types";
-import { formatCompactCurrency, formatCurrency, formatPercent } from "@/utils/format";
+import { formatCurrency, formatPercent } from "@/utils/format";
 
 /**
- * Builds the searchable index once at module load. Phase 2 replaces the body of
- * `search()` with a call to a real search endpoint; `SearchResult` stays put.
+ * Global search.
+ *
+ * Instruments come from the market-data engine, so a live provider's universe
+ * becomes searchable the moment one is configured. Everything else — funds,
+ * offerings, stories, lessons, tools — is Tradehere's own content and is
+ * matched locally.
+ *
+ * Server-only: this runs behind `/api/search` so no dataset and no provider
+ * detail is shipped to the browser.
  */
-function buildIndex(): SearchResult[] {
-  const stocks: SearchResult[] = STOCKS.map((s) => ({
-    id: `stock-${s.symbol}`,
-    type: "stock",
-    title: s.name,
-    subtitle: `${s.symbol} · ${s.sector}`,
-    href: `/stocks/${s.symbol}`,
-    meta: formatCurrency(s.price),
-    trend: s.changePercent,
-  }));
 
-  const funds: SearchResult[] = MUTUAL_FUNDS.map((f) => ({
-    id: `fund-${f.id}`,
+/** Content entries are static, so the non-market index is built once. */
+function buildContentIndex(): SearchResult[] {
+  const funds: SearchResult[] = MUTUAL_FUNDS.map((fund) => ({
+    id: `fund-${fund.id}`,
     type: "fund",
-    title: f.name,
-    subtitle: `${f.category} · ${f.subCategory}`,
-    href: `/mutual-funds?fund=${f.id}`,
-    meta: `${formatPercent(f.returns.y3)} · 3Y`,
-    trend: f.returns.y3,
+    title: fund.name,
+    subtitle: `${fund.category} · ${fund.subCategory}`,
+    href: `/mutual-funds?fund=${fund.id}`,
+    meta: `${formatPercent(fund.returns.y3)} · 3Y`,
+    trend: fund.returns.y3,
   }));
 
-  const ipos: SearchResult[] = IPOS.map((i) => ({
-    id: `ipo-${i.id}`,
+  const ipos: SearchResult[] = IPOS.map((ipo) => ({
+    id: `ipo-${ipo.id}`,
     type: "ipo",
-    title: i.company,
-    subtitle: `${i.sector} · ${i.status}`,
-    href: `/ipo?ipo=${i.id}`,
-    meta: `₹${i.priceBand.min}–${i.priceBand.max}`,
+    title: ipo.company,
+    subtitle: `${ipo.sector} · ${ipo.status}`,
+    href: `/ipo?ipo=${ipo.id}`,
+    meta: `₹${ipo.priceBand.min}–${ipo.priceBand.max}`,
   }));
 
-  const articles: SearchResult[] = NEWS.map((n) => ({
-    id: `news-${n.id}`,
+  const articles: SearchResult[] = NEWS.map((article) => ({
+    id: `news-${article.id}`,
     type: "article",
-    title: n.title,
-    subtitle: `${n.category} · ${n.readMinutes} min read`,
-    href: `/news/${n.slug}`,
+    title: article.title,
+    subtitle: `${article.category} · ${article.readMinutes} min read`,
+    href: `/news/${article.slug}`,
   }));
 
-  const learn: SearchResult[] = LEARN_ITEMS.map((l) => ({
-    id: `learn-${l.id}`,
+  const learn: SearchResult[] = LEARN_ITEMS.map((item) => ({
+    id: `learn-${item.id}`,
     type: "learn",
-    title: l.title,
-    subtitle: `${l.level} · ${l.topic}`,
-    href: `/learn/${l.slug}`,
-    meta: `${l.minutes} min`,
+    title: item.title,
+    subtitle: `${item.level} · ${item.topic}`,
+    href: `/learn/${item.slug}`,
+    meta: `${item.minutes} min`,
   }));
 
-  const tools: SearchResult[] = CALCULATORS.map((c) => ({
-    id: `tool-${c.id}`,
+  const tools: SearchResult[] = CALCULATORS.map((calculator) => ({
+    id: `tool-${calculator.id}`,
     type: "tool",
-    title: c.name,
-    subtitle: c.tagline,
-    href: `/tools/${c.slug}`,
+    title: calculator.name,
+    subtitle: calculator.tagline,
+    href: `/tools/${calculator.slug}`,
   }));
 
-  return [...stocks, ...funds, ...ipos, ...articles, ...learn, ...tools];
+  return [...funds, ...ipos, ...articles, ...learn, ...tools];
 }
 
-const INDEX = buildIndex();
+const CONTENT_INDEX = buildContentIndex();
 
-/** Cheap relevance score: prefix match > word-start match > substring. */
+/** Cheap relevance score: prefix match beats word-start beats substring. */
 function score(result: SearchResult, term: string): number {
   const title = result.title.toLowerCase();
   const subtitle = result.subtitle.toLowerCase();
@@ -82,30 +83,84 @@ function score(result: SearchResult, term: string): number {
   return 0;
 }
 
+async function instrumentResults(term: string, limit: number): Promise<SearchResult[]> {
+  try {
+    const found = await marketData.searchInstruments(term, limit);
+    if (found.data.length === 0) return [];
+
+    // One batched quote call decorates the matches with a price and a move.
+    const quotes = await marketData.getQuotes(found.data.map((instrument) => instrument.symbol));
+    const bySymbol = new Map(quotes.data.map((quote) => [quote.symbol, quote]));
+
+    return found.data.map<SearchResult>((instrument) => {
+      const quote = bySymbol.get(instrument.symbol);
+      return {
+        id: `stock-${instrument.symbol}`,
+        type: "stock",
+        title: instrument.name,
+        subtitle: `${instrument.symbol} · ${instrument.sector ?? instrument.exchange}`,
+        href: `/stocks/${instrument.symbol}`,
+        meta: quote ? formatCurrency(quote.currentPrice) : undefined,
+        trend: quote?.changePercent,
+      };
+    });
+  } catch {
+    // Search stays useful for content even when market data is down.
+    return [];
+  }
+}
+
 export async function search(query: string, limit = 12): Promise<SearchResult[]> {
   const term = query.trim().toLowerCase();
   if (!term) return [];
-  return INDEX.map((result) => ({ result, s: score(result, term) }))
+
+  const instruments = await instrumentResults(term, limit);
+
+  const content = CONTENT_INDEX.map((result) => ({ result, s: score(result, term) }))
     .filter((entry) => entry.s > 0)
     .sort((a, b) => b.s - a.s)
-    .slice(0, limit)
     .map((entry) => entry.result);
+
+  // Instruments lead: a symbol search should not be buried under articles.
+  return [...instruments, ...content].slice(0, limit);
 }
 
-/** Shown when the search modal opens with an empty query. */
+/** Shown when the search dialog opens with an empty query. */
 export async function getSearchSuggestions(): Promise<SearchResult[]> {
-  const popular = STOCKS.filter((s) => s.tags.includes("popular")).slice(0, 4);
-  return [
-    ...popular.map<SearchResult>((s) => ({
-      id: `stock-${s.symbol}`,
+  try {
+    const instruments = await marketData.listInstruments();
+    const symbols = instruments.data.slice(0, 4).map((instrument) => instrument.symbol);
+    const quotes = await marketData.getQuotes(symbols);
+
+    const popular = quotes.data.map<SearchResult>((quote) => ({
+      id: `stock-${quote.symbol}`,
       type: "stock",
-      title: s.name,
-      subtitle: `${s.symbol} · ${formatCompactCurrency(s.marketCap)}`,
-      href: `/stocks/${s.symbol}`,
-      meta: formatCurrency(s.price),
-      trend: s.changePercent,
-    })),
-    { id: "tool-sip", type: "tool", title: "SIP Calculator", subtitle: "Project a monthly investment plan", href: "/tools/sip" },
-    { id: "nav-ipo", type: "ipo", title: "IPO Centre", subtitle: "Upcoming, open and recently listed", href: "/ipo" },
-  ];
+      title: quote.name,
+      subtitle: `${quote.symbol} · ${quote.exchange}`,
+      href: `/stocks/${quote.symbol}`,
+      meta: formatCurrency(quote.currentPrice),
+      trend: quote.changePercent,
+    }));
+
+    return [...popular, ...FALLBACK_SUGGESTIONS];
+  } catch {
+    return FALLBACK_SUGGESTIONS;
+  }
 }
+
+const FALLBACK_SUGGESTIONS: SearchResult[] = [
+  {
+    id: "tool-sip",
+    type: "tool",
+    title: "SIP Calculator",
+    subtitle: "Project a monthly investment plan",
+    href: "/tools/sip",
+  },
+  {
+    id: "nav-ipo",
+    type: "ipo",
+    title: "IPO Centre",
+    subtitle: "Upcoming, open and recently listed",
+    href: "/ipo",
+  },
+];

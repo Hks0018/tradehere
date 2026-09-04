@@ -6,7 +6,7 @@ import {
   BookOpen, Calculator, CornerDownLeft, LineChart, Layers, Newspaper, Rocket, Search,
 } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
-import { getSearchSuggestions, search } from "@/services/searchService";
+import { fetchSearch } from "@/services/marketDataClient";
 import type { SearchResult, SearchResultType } from "@/types";
 import { cn } from "@/utils/cn";
 import { trendClass } from "@/utils/format";
@@ -28,9 +28,17 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
   const [suggestions, setSuggestions] = useState<SearchResult[]>([]);
   const [activeIndex, setActiveIndex] = useState(0);
 
+  // Suggestions are fetched once, the first time the dialog is opened.
   useEffect(() => {
-    void getSearchSuggestions().then(setSuggestions);
-  }, []);
+    if (!open || suggestions.length > 0) return;
+    const controller = new AbortController();
+    fetchSearch("", controller.signal)
+      .then(setSuggestions)
+      .catch(() => {
+        /* Suggestions are optional; the dialog is still usable without them. */
+      });
+    return () => controller.abort();
+  }, [open, suggestions.length]);
 
   const [wasOpen, setWasOpen] = useState(open);
   if (open !== wasOpen) {
@@ -47,16 +55,32 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
     return () => window.clearTimeout(id);
   }, [open]);
 
+  /**
+   * Queries run against Tradehere's own search endpoint, which is what keeps
+   * the dataset — and any future provider credentials — off the client.
+   * Debounced, and superseded requests are aborted so results cannot arrive
+   * out of order.
+   */
   useEffect(() => {
-    let cancelled = false;
-    void search(query).then((found) => {
-      if (!cancelled) {
-        setResults(found);
-        setActiveIndex(0);
-      }
-    });
+    // An empty query shows suggestions instead, so there is nothing to fetch
+    // and no state to clear — `visible` already switches source below.
+    if (!query.trim()) return;
+
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      fetchSearch(query, controller.signal)
+        .then((found) => {
+          setResults(found);
+          setActiveIndex(0);
+        })
+        .catch(() => {
+          if (!controller.signal.aborted) setResults([]);
+        });
+    }, 180);
+
     return () => {
-      cancelled = true;
+      window.clearTimeout(timer);
+      controller.abort();
     };
   }, [query]);
 
@@ -64,6 +88,10 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
     () => (query.trim() ? results : suggestions),
     [query, results, suggestions],
   );
+
+  // The highlighted row is clamped rather than reset, so switching between
+  // results and suggestions can never point past the end of the list.
+  const highlighted = Math.min(activeIndex, Math.max(visible.length - 1, 0));
 
   const go = (result: SearchResult) => {
     onClose();
@@ -77,9 +105,9 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
     } else if (event.key === "ArrowUp") {
       event.preventDefault();
       setActiveIndex((i) => (i - 1 + visible.length) % Math.max(visible.length, 1));
-    } else if (event.key === "Enter" && visible[activeIndex]) {
+    } else if (event.key === "Enter" && visible[highlighted]) {
       event.preventDefault();
-      go(visible[activeIndex]);
+      go(visible[highlighted]);
     }
   };
 
@@ -124,7 +152,7 @@ export function SearchModal({ open, onClose }: { open: boolean; onClose: () => v
             {visible.map((result, index) => {
               const meta = TYPE_META[result.type];
               const MetaIcon = meta.icon;
-              const active = index === activeIndex;
+              const active = index === highlighted;
               return (
                 <li key={result.id}>
                   <button

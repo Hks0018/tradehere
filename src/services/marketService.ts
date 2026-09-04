@@ -1,5 +1,7 @@
-import { MARKET_HIGHLIGHTS, MARKET_INDICES, MARKET_SENTIMENT, MARKET_STATUS, SECTORS, SNAPSHOT_INDEX_IDS } from "@/data/markets";
-import { STOCKS } from "@/data/stocks";
+import "server-only";
+
+import { MARKET_HIGHLIGHTS } from "@/data/markets";
+import { marketData } from "@/server/market-data";
 import type {
   FlowChain,
   MarketHighlight,
@@ -11,74 +13,126 @@ import type {
   SectorPulse,
   Stock,
 } from "@/types";
+import { candlesToPricePoints, toMarketIndex, toSector } from "./marketDataMapper";
+import { getStocks } from "./stockService";
+
+/**
+ * Market view and intelligence layer.
+ *
+ * Two jobs: map normalized engine output onto the interface's domain types, and
+ * derive the readings the product is actually about — pulse, narrative and
+ * rotation. Nothing here knows which provider supplied a number.
+ */
 
 export type MoverKind = "gainers" | "losers" | "active" | "trending";
 
-export async function getIndices(region?: MarketIndex["region"]): Promise<MarketIndex[]> {
-  return region ? MARKET_INDICES.filter((i) => i.region === region) : MARKET_INDICES;
+/** Indices are drawn with an intraday line, so each one is paired with 1D candles. */
+async function indexSeries(symbol: string) {
+  try {
+    const history = await marketData.getHistoricalData(symbol, "1D");
+    return candlesToPricePoints(history.data, "1D");
+  } catch {
+    return [];
+  }
 }
 
+export async function getIndices(region?: MarketIndex["region"]): Promise<MarketIndex[]> {
+  const indices = await marketData.getIndices();
+
+  const mapped = await Promise.all(
+    indices.data.map(async (index) => toMarketIndex(index, await indexSeries(index.symbol))),
+  );
+
+  return region ? mapped.filter((index) => index.region === region) : mapped;
+}
+
+/** The four indices highlighted on the homepage snapshot. */
+const SNAPSHOT_INDEX_IDS = ["nifty-50", "sensex", "nifty-bank", "sp-500"];
+
 export async function getSnapshotIndices(): Promise<MarketIndex[]> {
-  return SNAPSHOT_INDEX_IDS.map((id) => MARKET_INDICES.find((i) => i.id === id)).filter(
-    (i): i is MarketIndex => Boolean(i),
+  const indices = await getIndices();
+  return SNAPSHOT_INDEX_IDS.map((id) => indices.find((index) => index.id === id)).filter(
+    (index): index is MarketIndex => Boolean(index),
   );
 }
 
 export async function getIndexById(id: string): Promise<MarketIndex | undefined> {
-  return MARKET_INDICES.find((i) => i.id === id);
+  const indices = await getIndices();
+  return indices.find((index) => index.id === id.toLowerCase());
 }
 
 export async function getMovers(kind: MoverKind, limit = 6): Promise<Stock[]> {
-  const pool = [...STOCKS];
+  const pool = await getStocks();
   switch (kind) {
     case "gainers":
-      return pool.sort((a, b) => b.changePercent - a.changePercent).slice(0, limit);
+      return [...pool].sort((a, b) => b.changePercent - a.changePercent).slice(0, limit);
     case "losers":
-      return pool.sort((a, b) => a.changePercent - b.changePercent).slice(0, limit);
+      return [...pool].sort((a, b) => a.changePercent - b.changePercent).slice(0, limit);
     case "active":
-      return pool.sort((a, b) => b.volume - a.volume).slice(0, limit);
+      return [...pool].sort((a, b) => b.volume - a.volume).slice(0, limit);
     case "trending":
     default:
-      return pool
-        .filter((s) => s.tags.includes("trending"))
+      return [...pool]
+        .filter((stock) => stock.tags.includes("trending"))
         .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent))
         .slice(0, limit);
   }
 }
 
 export async function getAllMovers(limit = 6): Promise<Record<MoverKind, Stock[]>> {
-  const [trending, gainers, losers, active] = await Promise.all([
-    getMovers("trending", limit),
-    getMovers("gainers", limit),
-    getMovers("losers", limit),
-    getMovers("active", limit),
-  ]);
-  return { trending, gainers, losers, active };
+  // One universe load, reused for all four rankings.
+  const pool = await getStocks();
+  const by = (compare: (a: Stock, b: Stock) => number) => [...pool].sort(compare).slice(0, limit);
+
+  return {
+    trending: pool
+      .filter((stock) => stock.tags.includes("trending"))
+      .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent))
+      .slice(0, limit),
+    gainers: by((a, b) => b.changePercent - a.changePercent),
+    losers: by((a, b) => a.changePercent - b.changePercent),
+    active: by((a, b) => b.volume - a.volume),
+  };
 }
 
 export async function getSectors(): Promise<Sector[]> {
-  return [...SECTORS].sort((a, b) => b.changePercent - a.changePercent);
+  const sectors = await marketData.getSectorData();
+  return sectors.data.map(toSector).sort((a, b) => b.changePercent - a.changePercent);
 }
 
 export async function getSentiment(): Promise<MarketSentiment> {
-  return MARKET_SENTIMENT;
+  const breadth = await marketData.getMarketBreadth();
+  return {
+    score: breadth.data.sentimentScore,
+    label: breadth.data.sentimentLabel,
+    advancers: breadth.data.advancers,
+    decliners: breadth.data.decliners,
+    unchanged: breadth.data.unchanged,
+    updatedLabel: breadth.data.sessionLabel,
+  };
 }
 
+export async function getMarketStatus() {
+  const breadth = await marketData.getMarketBreadth();
+  return {
+    isOpen: breadth.data.isOpen,
+    label: breadth.data.sessionLabel,
+    nextEvent: "Demo data refreshes on page load",
+  };
+}
+
+/** Editorial commentary, not vendor data — it stays in the content layer. */
 export async function getHighlights(): Promise<MarketHighlight[]> {
   return MARKET_HIGHLIGHTS;
 }
 
-export async function getMarketStatus() {
-  return MARKET_STATUS;
-}
-
-/* ---------------------------------------------------------------------------
- * Derived market views
- * ------------------------------------------------------------------------ */
+/* -------------------------------------------------------------------------- */
+/* Intelligence layer                                                         */
+/* -------------------------------------------------------------------------- */
 
 function toPulseSectors(sectors: Sector[]): SectorPulse[] {
   const ranked = [...sectors].sort((a, b) => b.changePercent - a.changePercent);
-  const strongest = Math.max(...ranked.map((s) => Math.abs(s.changePercent)), 0.01);
+  const strongest = Math.max(...ranked.map((sector) => Math.abs(sector.changePercent)), 0.01);
 
   return ranked.map((sector, index) => ({
     ...sector,
@@ -104,8 +158,8 @@ export async function getMarketPulse(): Promise<MarketPulseData> {
       advancePercent: Number(((sentiment.advancers / total) * 100).toFixed(1)),
     },
     sectors: pulse,
-    leaders: pulse.filter((s) => s.direction === "up").slice(0, 3),
-    laggards: pulse.filter((s) => s.direction === "down").slice(-3).reverse(),
+    leaders: pulse.filter((sector) => sector.direction === "up").slice(0, 3),
+    laggards: pulse.filter((sector) => sector.direction === "down").slice(-3).reverse(),
     updatedLabel: sentiment.updatedLabel,
   };
 }
@@ -120,7 +174,6 @@ export async function getMarketNarrative(): Promise<MarketNarrative> {
   const lag = pulse.sectors[pulse.sectors.length - 1];
   const second = pulse.sectors[1];
 
-  const mood = pulse.label;
   const headline =
     pulse.score >= 60
       ? ["The market is", "cautiously optimistic."]
@@ -134,17 +187,17 @@ export async function getMarketNarrative(): Promise<MarketNarrative> {
     `${pulse.breadth.advancers.toLocaleString("en-IN")} counters advanced against ` +
     `${pulse.breadth.decliners.toLocaleString("en-IN")} that declined.`;
 
-  return { mood, headline, sentence, leadSector: lead, lagSector: lag };
+  return { mood: pulse.label, headline, sentence, leadSector: lead, lagSector: lag };
 }
 
 /**
- * Where momentum is rotating. Phase 1 derives the chains from ranked sector
- * performance; Phase 2 can replace the body with a real rotation model.
+ * Where momentum is rotating, derived from ranked sector performance. Phase 2B
+ * can replace the body with a real rotation model without touching the UI.
  */
 export async function getMarketFlow(): Promise<FlowChain[]> {
   const pulse = await getMarketPulse();
-  const rising = pulse.sectors.filter((s) => s.direction === "up").slice(0, 3);
-  const falling = pulse.sectors.filter((s) => s.direction === "down").slice(-3).reverse();
+  const rising = pulse.sectors.filter((sector) => sector.direction === "up").slice(0, 3);
+  const falling = pulse.sectors.filter((sector) => sector.direction === "down").slice(-3).reverse();
 
   return [
     {
@@ -152,14 +205,14 @@ export async function getMarketFlow(): Promise<FlowChain[]> {
       tone: "strong",
       label: "Money is flowing in",
       detail: "Sectors absorbing the strongest buying interest this session, in order of momentum.",
-      nodes: rising.map((s) => ({ name: s.name, changePercent: s.changePercent })),
+      nodes: rising.map((sector) => ({ name: sector.name, changePercent: sector.changePercent })),
     },
     {
       id: "out-of",
       tone: "weak",
       label: "Money is flowing out",
       detail: "Sectors seeing the heaviest distribution, ranked by the size of the decline.",
-      nodes: falling.map((s) => ({ name: s.name, changePercent: s.changePercent })),
+      nodes: falling.map((sector) => ({ name: sector.name, changePercent: sector.changePercent })),
     },
   ];
 }

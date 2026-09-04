@@ -5,12 +5,12 @@ import { ArrowUpDown, Search, SlidersHorizontal, X } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import type { Stock } from "@/types";
-import {
-  getStocks,
-  type SortDirection,
-  type StockCategory,
-  type StockSortKey,
-} from "@/services/stockService";
+import { fetchStocks } from "@/services/marketDataClient";
+import type {
+  SortDirection,
+  StockCategory,
+  StockSortKey,
+} from "@/services/stockService.types";
 import { Tabs } from "@/components/ui/Tabs";
 import { Delta } from "@/components/ui/Delta";
 import { Sparkline } from "@/components/ui/Sparkline";
@@ -57,17 +57,39 @@ export function StockScreener({
   const [sortDirection, setSortDirection] = useState<SortDirection>("desc");
   const [showFilters, setShowFilters] = useState(false);
   const [stocks, setStocks] = useState<Stock[]>(initialStocks);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const reduceMotion = useReducedMotion();
 
+  /**
+   * Filtering and ranking happen on the server, behind Tradehere's own API, so
+   * the browser never holds the full universe. Keystrokes are debounced and
+   * superseded requests aborted, so a fast typist cannot land stale results.
+   */
   useEffect(() => {
-    let cancelled = false;
-    void getStocks({ search, category, sectors: activeSectors, sortKey, sortDirection }).then(
-      (results) => {
-        if (!cancelled) setStocks(results);
-      },
-    );
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      setLoading(true);
+      fetchStocks(
+        { search, category, sectors: activeSectors, sortKey, sortDirection },
+        controller.signal,
+      )
+        .then((results) => {
+          setStocks(results);
+          setError(null);
+        })
+        .catch((cause: unknown) => {
+          if (controller.signal.aborted) return;
+          setError(cause instanceof Error ? cause.message : "Market data is unavailable.");
+        })
+        .finally(() => {
+          if (!controller.signal.aborted) setLoading(false);
+        });
+    }, search ? 250 : 0);
+
     return () => {
-      cancelled = true;
+      window.clearTimeout(timer);
+      controller.abort();
     };
   }, [search, category, activeSectors, sortKey, sortDirection]);
 
@@ -138,7 +160,9 @@ export function StockScreener({
             onChange={setCategory}
             size="sm"
           />
-          <p className="tnum eyebrow text-ink-400">{resultLabel}</p>
+          <p className="tnum eyebrow text-ink-400" aria-live="polite">
+            {loading ? "Updating…" : resultLabel}
+          </p>
         </div>
 
         <AnimatePresence initial={false}>
@@ -194,8 +218,10 @@ export function StockScreener({
       {stocks.length === 0 ? (
         <div className="mt-8">
           <EmptyState
-            title="No companies match those filters"
-            description="Try a different search term, or clear the sector filters to widen the results."
+            title={error ? "Market data is unavailable" : "No companies match those filters"}
+            description={
+              error ?? "Try a different search term, or clear the sector filters to widen the results."
+            }
             action={
               <Button
                 variant="secondary"
