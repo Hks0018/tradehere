@@ -232,10 +232,18 @@ function NewsTab({ news, name }: { news: NewsArticle[]; name: string }) {
 
   return (
     <ul className="grid gap-3 sm:grid-cols-2">
-      {news.map((article) => (
+      {news.map((article) => {
+        // Provider items live at the publisher; sample editorial has a page here.
+        const external = Boolean(article.url);
+        const LinkComponent = external ? "a" : Link;
+        const linkProps = external
+          ? { href: article.url!, target: "_blank", rel: "noopener noreferrer" }
+          : { href: `/news/${article.slug}` };
+
+        return (
         <li key={article.id}>
-          <Link
-            href={`/news/${article.slug}`}
+          <LinkComponent
+            {...linkProps}
             className="group flex h-full flex-col border-t border-ink-200 pt-4 transition-colors hover:border-ink-900"
           >
             <span className="eyebrow text-brand-600">{article.category}</span>
@@ -245,10 +253,12 @@ function NewsTab({ news, name }: { news: NewsArticle[]; name: string }) {
             <span className="mt-3 flex-1 text-sm leading-relaxed text-ink-500">{article.summary}</span>
             <span className="mt-5 font-mono text-[0.6875rem] text-ink-400">
               {article.source} · {formatRelative(article.publishedAt, DATA_REFERENCE_DATE)}
+              {external && " · opens at source"}
             </span>
-          </Link>
+          </LinkComponent>
         </li>
-      ))}
+        );
+      })}
     </ul>
   );
 }

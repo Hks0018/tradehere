@@ -26,10 +26,17 @@ import { getStocks } from "./stockService";
 
 export type MoverKind = "gainers" | "losers" | "active" | "trending";
 
-/** Indices are drawn with an intraday line, so each one is paired with 1D candles. */
+/**
+ * Indices are drawn with a line, so each one is paired with candles.
+ *
+ * Explicitly unmetered. Every index view renders eight of these at once, and
+ * Alpha Vantage publishes no NIFTY or SENSEX symbol — verified by real request
+ * — so allowing metered providers here would spend eight calls per page to
+ * learn nothing.
+ */
 async function indexSeries(symbol: string) {
   try {
-    const history = await marketData.getHistoricalData(symbol, "1D");
+    const history = await marketData.getHistoricalData(symbol, "1D", { allowMetered: false });
     return candlesToPricePoints(history.data, "1D");
   } catch {
     return [];

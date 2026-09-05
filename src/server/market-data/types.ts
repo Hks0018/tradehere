@@ -167,6 +167,21 @@ export interface CompanyProfile {
   timestamp: string;
 }
 
+export type NewsSentiment = "Bullish" | "Somewhat-Bullish" | "Neutral" | "Somewhat-Bearish" | "Bearish";
+
+/** A market news item attributed to an instrument. */
+export interface MarketNewsItem {
+  id: string;
+  title: string;
+  summary: string;
+  url: string;
+  source: string;
+  publishedAt: string;
+  /** Provider-supplied sentiment, when the feed classifies it. */
+  sentiment?: NewsSentiment;
+  tickers: string[];
+}
+
 /* -------------------------------------------------------------------------- */
 /* Envelopes                                                                  */
 /* -------------------------------------------------------------------------- */

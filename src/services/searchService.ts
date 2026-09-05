@@ -83,9 +83,17 @@ function score(result: SearchResult, term: string): number {
   return 0;
 }
 
+/**
+ * Instruments for the global search box.
+ *
+ * Deliberately unmetered. The dialog searches on every keystroke, so routing it
+ * to a provider with a small daily quota would empty the allowance in a few
+ * seconds of typing. The covered universe answers instantly and for free;
+ * `/api/market/search` is the explicit, metered instrument lookup.
+ */
 async function instrumentResults(term: string, limit: number): Promise<SearchResult[]> {
   try {
-    const found = await marketData.searchInstruments(term, limit);
+    const found = await marketData.searchInstruments(term, limit, { allowMetered: false });
     if (found.data.length === 0) return [];
 
     // One batched quote call decorates the matches with a price and a move.

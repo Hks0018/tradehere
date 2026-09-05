@@ -91,6 +91,7 @@ export function MoversRanking({
           {lead && (
             <Link
               href={`/stocks/${lead.symbol}`}
+      prefetch={false}
               className="group/lead grid items-center gap-8 border-b border-ink-200 py-10 lg:grid-cols-[4rem_minmax(0,1fr)_minmax(0,1fr)_auto] lg:gap-10"
             >
               <span className="tnum font-mono text-sm text-ink-300">01</span>
@@ -126,6 +127,7 @@ export function MoversRanking({
               <li key={stock.symbol} className="border-b border-ink-100">
                 <Link
                   href={`/stocks/${stock.symbol}`}
+      prefetch={false}
                   className="group/row grid items-center gap-4 py-5 sm:grid-cols-[3rem_minmax(0,1fr)_auto_auto] sm:gap-8"
                 >
                   <span className="tnum hidden font-mono text-xs text-ink-300 sm:block">

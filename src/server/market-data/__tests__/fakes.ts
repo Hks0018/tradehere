@@ -1,5 +1,5 @@
 import type { MarketDataProvider } from "../provider.interface";
-import type { NormalizedQuote, ProviderCapabilities, ProviderResult } from "../types";
+import type { DataStatus, NormalizedQuote, ProviderCapabilities, ProviderResult } from "../types";
 import { MarketDataError } from "../errors";
 
 export const ALL_CAPABILITIES: ProviderCapabilities = {
@@ -44,6 +44,8 @@ export class FakeProvider implements MarketDataProvider {
   calls = 0;
   mode: "ok" | "fail" | "rate-limited" | "invalid-symbol" | "garbage" = "ok";
   configured = true;
+  /** Status this double reports on success; set "MOCK" to stand in for sample data. */
+  status: DataStatus = "LIVE";
 
   constructor(
     readonly id: string,
@@ -78,8 +80,8 @@ export class FakeProvider implements MarketDataProvider {
         };
       default:
         return {
-          data: makeQuote(symbol, this.price, this.id),
-          status: "LIVE",
+          data: { ...makeQuote(symbol, this.price, this.id), dataStatus: this.status },
+          status: this.status,
           timestamp: "2026-09-04T10:00:00.000Z",
         };
     }

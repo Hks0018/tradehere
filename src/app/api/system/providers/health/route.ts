@@ -16,6 +16,17 @@ export const dynamic = "force-dynamic";
 export async function GET() {
   const providers = marketData.providerHealth();
 
+  // Remaining daily quota for the metered provider. Counts only — no key, no
+  // base URL, nothing that could identify the credential.
+  //
+  // Detected structurally rather than with `instanceof`: the engine is reached
+  // both through its barrel and by direct path, and a bundler may give those
+  // separate module instances, which would silently fail an identity check.
+  const metered = marketData.provider("alphavantage") as
+    | { budgetSnapshot?: () => unknown }
+    | undefined;
+  const budget = typeof metered?.budgetSnapshot === "function" ? metered.budgetSnapshot() : null;
+
   const overall = providers.some((provider) => provider.status === "HEALTHY")
     ? "OPERATIONAL"
     : "DEGRADED";
@@ -25,6 +36,7 @@ export async function GET() {
       data: {
         overall,
         providers,
+        budget: budget ? { alphavantage: budget } : undefined,
         routing: {
           quotes: marketData.priorityFor("quotes", "getQuote"),
           historical: marketData.priorityFor("historical", "getHistoricalData"),
@@ -33,6 +45,7 @@ export async function GET() {
           sectors: marketData.priorityFor("sectors", "getSectorData"),
           breadth: marketData.priorityFor("breadth", "getMarketBreadth"),
           fundamentals: marketData.priorityFor("fundamentals", "getCompanyProfile"),
+          news: marketData.priorityFor("news", "getMarketNews"),
         },
         checkedAt: new Date().toISOString(),
       },

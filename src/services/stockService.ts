@@ -1,7 +1,12 @@
 import "server-only";
 
 import { marketData } from "@/server/market-data";
-import type { CandleInterval, CompanyProfile, NormalizedQuote } from "@/server/market-data";
+import type {
+  CandleInterval,
+  CompanyProfile,
+  NormalizedQuote,
+  ResponseMeta,
+} from "@/server/market-data";
 import type { MarketCapBucket, PricePoint, Stock, StockDetail, Timeframe } from "@/types";
 import type { SortDirection, StockCategory, StockSortKey } from "./stockService.types";
 import {
@@ -58,7 +63,9 @@ async function loadUniverse(): Promise<{ entries: UniverseEntry[]; tags: StockTa
   const profiles = await Promise.all(
     quotes.data.map(async (quote) => {
       try {
-        return await marketData.getCompanyProfile(quote.symbol);
+        // Bulk: metered providers are skipped so a list render cannot spend
+        // the day's API allowance.
+        return await marketData.getCompanyProfile(quote.symbol, { allowMetered: false });
       } catch {
         // A missing profile must not remove a tradable instrument from the list.
         return null;
@@ -84,14 +91,24 @@ async function loadUniverse(): Promise<{ entries: UniverseEntry[]; tags: StockTa
   return { entries, tags };
 }
 
-async function seriesFor(symbol: string, interval: CandleInterval): Promise<PricePoint[]> {
+async function historyFor(
+  symbol: string,
+  interval: CandleInterval,
+  options: { allowMetered?: boolean } = {},
+): Promise<{ points: PricePoint[]; meta: ResponseMeta | null }> {
   try {
-    const history = await marketData.getHistoricalData(symbol, interval);
-    return candlesToPricePoints(history.data, interval);
+    const history = await marketData.getHistoricalData(symbol, interval, options);
+    return { points: candlesToPricePoints(history.data, interval), meta: history.meta };
   } catch {
     // A chart is an enhancement; losing it must not blank the row.
-    return [];
+    return { points: [], meta: null };
   }
+}
+
+async function seriesFor(symbol: string, interval: CandleInterval): Promise<PricePoint[]> {
+  // Every caller of this helper is rendering a list; detail views ask for
+  // history explicitly through `historyFor`.
+  return (await historyFor(symbol, interval, { allowMetered: false })).points;
 }
 
 async function buildStocks(entries: UniverseEntry[], tags: StockTagSets): Promise<Stock[]> {
@@ -150,12 +167,30 @@ export async function getStocks(query: StockQuery = {}): Promise<Stock[]> {
   return limit ? results.slice(0, limit) : results;
 }
 
-export async function getStockBySymbol(symbol: string): Promise<StockDetail | undefined> {
+/**
+ * A company with the provenance of each part of it.
+ *
+ * Quote and fundamentals can legitimately come from different providers — a
+ * live price with sample fundamentals, say — so the page is told about each
+ * separately and can describe them accurately instead of applying one blanket
+ * label to the whole screen.
+ */
+export interface StockWithProvenance {
+  stock: StockDetail;
+  quoteMeta: ResponseMeta;
+  profileMeta: ResponseMeta;
+  historyMeta: ResponseMeta | null;
+}
+
+export async function getStockWithProvenance(
+  symbol: string,
+): Promise<StockWithProvenance | undefined> {
   try {
     const [quote, profile] = await Promise.all([
       marketData.getQuote(symbol),
       marketData.getCompanyProfile(symbol),
     ]);
+
 
     const { entries } = await loadUniverse();
     const tags = deriveTagSets(
@@ -167,16 +202,22 @@ export async function getStockBySymbol(symbol: string): Promise<StockDetail | un
       })),
     );
 
-    return toStockDetail(
-      quote.data,
-      profile.data,
-      await seriesFor(quote.data.symbol, LIST_INTERVAL),
-      tags,
-    );
+    const history = await historyFor(quote.data.symbol, LIST_INTERVAL);
+
+    return {
+      stock: toStockDetail(quote.data, profile.data, history.points, tags),
+      quoteMeta: quote.meta,
+      profileMeta: profile.meta,
+      historyMeta: history.meta,
+    };
   } catch {
     // Unknown symbol, or no provider could answer — the page renders its 404.
     return undefined;
   }
+}
+
+export async function getStockBySymbol(symbol: string): Promise<StockDetail | undefined> {
+  return (await getStockWithProvenance(symbol))?.stock;
 }
 
 export async function getStockSymbols(): Promise<string[]> {
@@ -193,11 +234,24 @@ export async function getSectorList(): Promise<string[]> {
   return [...sectors].sort();
 }
 
+/**
+ * History for one instrument, with provenance.
+ *
+ * Called from the stock detail chart, which is an explicit user request for one
+ * symbol and therefore worth a metered call.
+ */
+export async function getPriceHistoryWithProvenance(
+  symbol: string,
+  timeframe: Timeframe,
+): Promise<{ points: PricePoint[]; meta: ResponseMeta | null }> {
+  return historyFor(symbol, timeframe);
+}
+
 export async function getPriceHistory(
   symbol: string,
   timeframe: Timeframe,
 ): Promise<PricePoint[]> {
-  return seriesFor(symbol, timeframe);
+  return (await historyFor(symbol, timeframe)).points;
 }
 
 export async function getRelatedStocks(symbol: string, limit = 4): Promise<Stock[]> {

@@ -13,23 +13,29 @@ import { MaskedHeading } from "@/components/ui/MaskedHeading";
 import { Reveal } from "@/components/ui/Reveal";
 import { Stat, StatGrid } from "@/components/ui/Stat";
 import { ArrowLink } from "@/components/ui/Button";
-import { getNewsByTicker } from "@/services/newsService";
+import { getNewsByTicker } from "@/services/stockNewsService";
 import {
   getRelatedStocks,
   getStockBySymbol,
   getStockStory,
-  getStockSymbols,
+  getStockWithProvenance,
 } from "@/services/stockService";
+import { describeQuote, describeSection, isRealMarketData } from "@/utils/provenance";
 import { formatCompactCurrency, formatCurrency, formatSigned } from "@/utils/format";
 
 interface PageProps {
   params: Promise<{ symbol: string }>;
 }
 
-export async function generateStaticParams() {
-  const symbols = await getStockSymbols();
-  return symbols.map((symbol) => ({ symbol }));
-}
+/**
+ * Rendered per request rather than prerendered.
+ *
+ * This page carries real market data, and static generation would do two bad
+ * things: freeze a price into HTML at build time, and spend the day's metered
+ * API allowance building twenty-eight pages at once. The engine's cache does
+ * the work instead, so repeat views cost nothing while the data stays current.
+ */
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { symbol } = await params;
@@ -37,14 +43,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!stock) return { title: "Stock not found" };
   return {
     title: `${stock.name} (${stock.symbol})`,
-    description: `Sample price, fundamentals, financials and coverage for ${stock.name}. Demonstration data only.`,
+    description: `Price, fundamentals, financials and coverage for ${stock.name}.`,
   };
 }
 
 export default async function StockDetailPage({ params }: PageProps) {
   const { symbol } = await params;
-  const stock = await getStockBySymbol(symbol);
-  if (!stock) notFound();
+  const resolved = await getStockWithProvenance(symbol);
+  if (!resolved) notFound();
+
+  const { stock, quoteMeta, profileMeta, historyMeta } = resolved;
 
   const [related, news, story] = await Promise.all([
     getRelatedStocks(stock.symbol),
@@ -91,6 +99,12 @@ export default async function StockDetailPage({ params }: PageProps) {
                   <span>{stock.industry}</span>
                   <span aria-hidden>—</span>
                   <span>{stock.capBucket}</span>
+                  {isRealMarketData(quoteMeta) && (
+                    <>
+                      <span aria-hidden>—</span>
+                      <span className="text-up-400">Real market data</span>
+                    </>
+                  )}
                 </p>
               </Reveal>
             </div>
@@ -106,7 +120,7 @@ export default async function StockDetailPage({ params }: PageProps) {
                   </span>
                   <Delta value={stock.changePercent} size="lg" onVoid />
                 </p>
-                <p className="eyebrow mt-4 text-paper-300/45">Sample close · not a live quote</p>
+                <p className="eyebrow mt-4 text-paper-300/45">{describeQuote(quoteMeta)}</p>
               </div>
             </Reveal>
           </div>
@@ -117,7 +131,12 @@ export default async function StockDetailPage({ params }: PageProps) {
       <section className="section-y-sm bg-white">
         <div className="container-page">
           <Reveal y={18}>
-            <StockChartPanel stock={stock} />
+            <StockChartPanel
+              stock={stock}
+              initialSeries={stock.series}
+              initialSource={historyMeta?.source ?? null}
+              initialStatus={historyMeta?.status ?? "UNAVAILABLE"}
+            />
           </Reveal>
         </div>
       </section>
@@ -153,7 +172,7 @@ export default async function StockDetailPage({ params }: PageProps) {
       {/* Key numbers */}
       <section className="section-y-sm bg-white">
         <div className="container-page">
-          <Eyebrow>Key numbers</Eyebrow>
+          <Eyebrow>{describeSection(profileMeta, "Key numbers")}</Eyebrow>
           <Reveal delay={0.1} y={16}>
             <StatGrid columns={4} className="mt-8 sm:grid-cols-3 lg:grid-cols-5">
               <Stat label="Market cap" value={formatCompactCurrency(stock.marketCap)} />
@@ -167,6 +186,10 @@ export default async function StockDetailPage({ params }: PageProps) {
           <Reveal delay={0.16} y={16} className="mt-20">
             <StockTabs stock={stock} news={news} />
           </Reveal>
+
+          <p className="mt-10 font-mono text-[0.6875rem] text-ink-400">
+            {describeSection(historyMeta, "Price history")}
+          </p>
         </div>
       </section>
 

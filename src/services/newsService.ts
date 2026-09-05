@@ -51,6 +51,4 @@ export async function getNewsSlugs(): Promise<string[]> {
   return NEWS.map((n) => n.slug);
 }
 
-export async function getNewsByTicker(symbol: string, limit = 4): Promise<NewsArticle[]> {
-  return NEWS.filter((n) => n.tickers.includes(symbol)).sort(byRecency).slice(0, limit);
-}
+

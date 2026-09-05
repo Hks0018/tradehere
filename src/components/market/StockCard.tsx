@@ -13,6 +13,7 @@ export function StockCard({ stock, className }: { stock: Stock; className?: stri
   return (
     <Link
       href={`/stocks/${stock.symbol}`}
+      prefetch={false}
       className={cn(
         "group/card flex flex-col border-t border-ink-200 pt-4 transition-colors hover:border-ink-900",
         className,
@@ -55,6 +56,7 @@ export function StockRow({ stock, rank }: { stock: Stock; rank?: number }) {
   return (
     <Link
       href={`/stocks/${stock.symbol}`}
+      prefetch={false}
       className="group/row grid items-center gap-4 border-b border-ink-100 py-4 sm:grid-cols-[3rem_minmax(0,1fr)_auto_auto] sm:gap-8"
     >
       {typeof rank === "number" && (

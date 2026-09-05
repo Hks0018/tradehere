@@ -129,6 +129,7 @@ export default async function ArticlePage({ params }: PageProps) {
                       <li key={stock!.symbol} className="border-b border-ink-100">
                         <Link
                           href={`/stocks/${stock!.symbol}`}
+      prefetch={false}
                           className="group/m flex items-center justify-between gap-6 py-4"
                         >
                           <span className="min-w-0">

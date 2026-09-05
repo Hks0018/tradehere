@@ -279,7 +279,8 @@ export function StockScreener({
                 {stocks.map((stock) => (
                   <tr key={stock.symbol} className="group border-b border-ink-100 transition-colors hover:bg-paper-100/60">
                     <td className="px-4 py-4">
-                      <Link href={`/stocks/${stock.symbol}`} className="flex items-center gap-3">
+                      <Link href={`/stocks/${stock.symbol}`}
+      prefetch={false} className="flex items-center gap-3">
                         <span className="min-w-0">
                           <span className="block truncate text-[0.9375rem] font-medium text-ink-900 group-hover:text-brand-600">
                             {stock.name}

@@ -161,6 +161,11 @@ export interface NewsArticle {
   trending: boolean;
   tickers: string[];
   accent: string;
+  /**
+   * Set when the item comes from an external news provider. Sample editorial
+   * has an internal page instead, so the link target differs.
+   */
+  url?: string;
 }
 
 export type LearnLevel = "Beginner" | "Intermediate" | "Advanced";

@@ -1,4 +1,4 @@
-import type { SearchResult, Stock } from "@/types";
+import type { PricePoint, SearchResult, Stock, Timeframe } from "@/types";
 import type { StockCategory, StockSortKey, SortDirection } from "./stockService.types";
 
 /**
@@ -66,6 +66,44 @@ export async function fetchStocks(
 
   const body = await getJson<{ data: Stock[] }>(`/api/market/stocks?${params}`, signal);
   return body.data;
+}
+
+export interface HistoryResponse {
+  points: PricePoint[];
+  source: string | null;
+  status: string;
+  timestamp: string;
+}
+
+/**
+ * Price history for one instrument.
+ *
+ * Returns the provenance alongside the series so the chart can state where the
+ * data came from instead of assuming.
+ */
+export async function fetchHistory(
+  symbol: string,
+  interval: Timeframe,
+  signal?: AbortSignal,
+): Promise<HistoryResponse> {
+  const body = await getJson<{
+    data: { timestamp: string; close: number }[];
+    meta: { source: string | null; status: string; timestamp: string };
+  }>(`/api/market/history?symbol=${encodeURIComponent(symbol)}&interval=${interval}`, signal);
+
+  return {
+    // Intraday timestamps carry a time; daily ones do not. Slicing rather than
+    // parsing keeps labels stable regardless of the viewer's timezone.
+    points: body.data.map((candle) => ({
+      t: interval === "1D" && candle.timestamp.length > 10
+        ? candle.timestamp.slice(11, 16)
+        : candle.timestamp.slice(0, 10),
+      v: candle.close,
+    })),
+    source: body.meta.source,
+    status: body.meta.status,
+    timestamp: body.meta.timestamp,
+  };
 }
 
 export async function fetchSearch(query: string, signal?: AbortSignal): Promise<SearchResult[]> {

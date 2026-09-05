@@ -2,7 +2,11 @@ import { CircuitBreaker, type CircuitSnapshot } from "./circuit-breaker";
 import { marketDataConfig } from "./config";
 import type { ProviderId } from "./types";
 
-export type ProviderHealthStatus = "HEALTHY" | "DEGRADED" | "UNAVAILABLE";
+export type ProviderHealthStatus =
+  | "HEALTHY"
+  | "DEGRADED"
+  | "RATE_LIMITED"
+  | "UNAVAILABLE";
 
 export interface ProviderHealthSnapshot {
   providerId: ProviderId;
@@ -85,7 +89,14 @@ export class ProviderHealthRegistry {
   status(providerId: ProviderId, configured: boolean): ProviderHealthStatus {
     if (!configured) return "UNAVAILABLE";
     const record = this.record(providerId);
-    if (record.breaker.snapshot().state === "OPEN") return "UNAVAILABLE";
+    const open = record.breaker.snapshot().state === "OPEN";
+
+    // Being rate limited is reported distinctly from being broken: the
+    // provider is fine, the quota is spent, and it will recover on its own.
+    if (record.lastErrorCode === "RATE_LIMITED" && (open || record.consecutiveFailures > 0)) {
+      return "RATE_LIMITED";
+    }
+    if (open) return "UNAVAILABLE";
     if (record.consecutiveFailures > 0) return "DEGRADED";
     return "HEALTHY";
   }

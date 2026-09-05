@@ -4,6 +4,7 @@ import type {
   HistoricalCandle,
   InstrumentSearchResult,
   MarketBreadth,
+  MarketNewsItem,
   NormalizedIndex,
   NormalizedQuote,
   NormalizedSector,
@@ -29,6 +30,11 @@ export interface MarketDataProvider {
   /** Human-readable name for health reporting. */
   readonly label: string;
   readonly capabilities: ProviderCapabilities;
+  /**
+   * True when calls cost quota. Bulk work can opt out of metered providers so
+   * a list of 28 instruments cannot spend a day's allowance in one render.
+   */
+  readonly metered?: boolean;
 
   /**
    * Whether this provider has everything it needs to run (credentials, base
@@ -53,4 +59,5 @@ export interface MarketDataProvider {
   getSectorData?(): Promise<ProviderResult<NormalizedSector[]>>;
   getMarketBreadth?(): Promise<ProviderResult<MarketBreadth>>;
   getCompanyProfile?(symbol: string): Promise<ProviderResult<CompanyProfile>>;
+  getMarketNews?(symbol: string, limit: number): Promise<ProviderResult<MarketNewsItem[]>>;
 }

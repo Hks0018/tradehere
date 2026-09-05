@@ -5,6 +5,7 @@ import { marketDataLogger } from "./logger";
 import { ProviderHealthRegistry, type ProviderHealthSnapshot } from "./provider-health";
 import type { MarketDataProvider } from "./provider.interface";
 import { ProviderRegistry } from "./provider.registry";
+import { SingleFlight } from "./single-flight";
 import type {
   CandleInterval,
   Capability,
@@ -13,6 +14,7 @@ import type {
   HistoricalCandle,
   InstrumentSearchResult,
   MarketBreadth,
+  MarketNewsItem,
   NormalizedIndex,
   NormalizedQuote,
   NormalizedSector,
@@ -29,6 +31,17 @@ interface ResolveOptions<T> {
   call: (provider: MarketDataProvider) => Promise<ProviderResult<T>>;
   /** Rejects payloads that are structurally wrong or empty. */
   validate: (value: T) => boolean;
+  /**
+   * Whether providers that cost quota may serve this request. Bulk callers
+   * pass false so list rendering falls straight through to free sources.
+   */
+  allowMetered?: boolean;
+}
+
+/** Per-request options exposed to callers of the public methods. */
+export interface RequestOptions {
+  /** Set false for list/bulk work so metered providers are skipped. */
+  allowMetered?: boolean;
 }
 
 export interface OrchestratorOptions {
@@ -57,6 +70,8 @@ export class MarketDataOrchestrator {
   private readonly cache: CacheStore;
   private readonly health: ProviderHealthRegistry;
   private readonly now: () => number;
+  /** Collapses concurrent identical requests into one provider call. */
+  private readonly inFlight = new SingleFlight();
 
   constructor(options: OrchestratorOptions) {
     this.now = options.now ?? Date.now;
@@ -69,7 +84,10 @@ export class MarketDataOrchestrator {
   /* Public API                                                             */
   /* ---------------------------------------------------------------------- */
 
-  getQuote(symbol: string): Promise<DataEnvelope<NormalizedQuote>> {
+  getQuote(
+    symbol: string,
+    options: RequestOptions = {},
+  ): Promise<DataEnvelope<NormalizedQuote>> {
     const normalized = symbol.trim().toUpperCase();
     return this.resolve<NormalizedQuote>({
       capability: "quotes",
@@ -78,6 +96,7 @@ export class MarketDataOrchestrator {
       key: cacheKey(["quote", normalized]),
       call: (provider) => provider.getQuote!(normalized),
       validate: (quote) => Boolean(quote?.symbol) && Number.isFinite(quote.currentPrice),
+      allowMetered: options.allowMetered,
     });
   }
 
@@ -96,6 +115,7 @@ export class MarketDataOrchestrator {
   getHistoricalData(
     symbol: string,
     interval: CandleInterval,
+    options: RequestOptions = {},
   ): Promise<DataEnvelope<HistoricalCandle[]>> {
     const normalized = symbol.trim().toUpperCase();
     return this.resolve<HistoricalCandle[]>({
@@ -105,6 +125,7 @@ export class MarketDataOrchestrator {
       key: cacheKey(["history", normalized, interval]),
       call: (provider) => provider.getHistoricalData!(normalized, interval),
       validate: (candles) => Array.isArray(candles) && candles.length > 1,
+      allowMetered: options.allowMetered,
     });
   }
 
@@ -119,7 +140,11 @@ export class MarketDataOrchestrator {
     });
   }
 
-  searchInstruments(query: string, limit = 12): Promise<DataEnvelope<InstrumentSearchResult[]>> {
+  searchInstruments(
+    query: string,
+    limit = 12,
+    options: RequestOptions = {},
+  ): Promise<DataEnvelope<InstrumentSearchResult[]>> {
     const term = query.trim();
     return this.resolve<InstrumentSearchResult[]>({
       capability: "search",
@@ -129,6 +154,7 @@ export class MarketDataOrchestrator {
       call: (provider) => provider.searchInstruments!(term, limit),
       // An empty result set is a legitimate answer to a search.
       validate: (results) => Array.isArray(results),
+      allowMetered: options.allowMetered,
     });
   }
 
@@ -165,7 +191,10 @@ export class MarketDataOrchestrator {
     });
   }
 
-  getCompanyProfile(symbol: string): Promise<DataEnvelope<CompanyProfile>> {
+  getCompanyProfile(
+    symbol: string,
+    options: RequestOptions = {},
+  ): Promise<DataEnvelope<CompanyProfile>> {
     const normalized = symbol.trim().toUpperCase();
     return this.resolve<CompanyProfile>({
       capability: "fundamentals",
@@ -174,12 +203,30 @@ export class MarketDataOrchestrator {
       key: cacheKey(["profile", normalized]),
       call: (provider) => provider.getCompanyProfile!(normalized),
       validate: (profile) => Boolean(profile?.symbol),
+      allowMetered: options.allowMetered,
+    });
+  }
+
+  getMarketNews(symbol: string, limit = 6): Promise<DataEnvelope<MarketNewsItem[]>> {
+    const normalized = symbol.trim().toUpperCase();
+    return this.resolve<MarketNewsItem[]>({
+      capability: "news",
+      method: "getMarketNews",
+      cacheKind: "news",
+      key: cacheKey(["news", normalized, limit]),
+      call: (provider) => provider.getMarketNews!(normalized, limit),
+      validate: (items) => Array.isArray(items) && items.length > 0,
     });
   }
 
   /* ---------------------------------------------------------------------- */
   /* Health                                                                 */
   /* ---------------------------------------------------------------------- */
+
+  /** Registered provider by id, for diagnostics surfaces. */
+  provider(id: ProviderId): MarketDataProvider | undefined {
+    return this.registry.get(id);
+  }
 
   providerHealth(): ProviderHealthSnapshot[] {
     return this.registry
@@ -196,9 +243,29 @@ export class MarketDataOrchestrator {
   /* The resolution pipeline                                                */
   /* ---------------------------------------------------------------------- */
 
-  private async resolve<T>(options: ResolveOptions<T>): Promise<DataEnvelope<T>> {
-    const { capability, method, cacheKind, key, call, validate } = options;
+  private resolve<T>(options: ResolveOptions<T>): Promise<DataEnvelope<T>> {
+    // Two callers asking for the same thing at the same instant share one
+    // provider call — decisive on a metered free tier.
+    const scope = options.allowMetered === false ? "bulk" : "std";
+    return this.inFlight.run(`${scope}:${options.capability}:${options.key}`, () =>
+      this.resolveUncoalesced(options),
+    );
+  }
+
+  private async resolveUncoalesced<T>(options: ResolveOptions<T>): Promise<DataEnvelope<T>> {
+    const { capability, method, cacheKind, call, validate } = options;
     const retrievedAt = new Date(this.now()).toISOString();
+    const allowMetered = options.allowMetered ?? true;
+
+    /**
+     * Cache entries are scoped by whether metered providers were permitted.
+     *
+     * Without this, a list render — which deliberately avoids paid providers —
+     * would cache a sample value under the same key an explicit request uses,
+     * and the detail page would be served sample data even though real data
+     * was available. The two populations are kept apart.
+     */
+    const key = allowMetered ? options.key : `bulk:${options.key}`;
 
     // 1. Fresh cache short-circuits everything.
     const cached = await this.cache.get<T>(key);
@@ -218,8 +285,15 @@ export class MarketDataOrchestrator {
       };
     }
 
-    // 2. Walk providers in priority order.
-    const candidates = this.registry.forCapability(capability, method);
+    // 2. Walk providers in priority order, dropping metered ones when the
+    //    caller has declared this is bulk work.
+    const candidates = this.registry
+      .forCapability(capability, method)
+      .filter((provider) => {
+        if (allowMetered || !provider.metered) return true;
+        marketDataLogger.providerSkipped(capability, provider.id, "metered_bulk_request");
+        return false;
+      });
     const attempted: ProviderId[] = [];
     let lastError: MarketDataError | null = null;
 
@@ -275,15 +349,20 @@ export class MarketDataOrchestrator {
         const marketError = toMarketDataError(error, provider.id);
         lastError = marketError;
 
-        // A bad symbol is the caller's problem, not the provider's. The
-        // provider answered correctly, so it must not be marked unhealthy —
-        // otherwise a crawler hitting unknown tickers would trip every circuit
-        // and take the platform's data source down. Trying another provider
-        // would only repeat the same answer, so this stops here.
+        // A bad symbol is the caller's problem, not the provider's. Trying
+        // another provider would only repeat the same answer, so this stops
+        // here without marking anyone unhealthy.
         if (!marketError.retryable) throw marketError;
 
-        this.health.recordFailure(provider.id, marketError.code);
-        marketDataLogger.providerFailure(capability, provider.id, marketError.code);
+        // Coverage and entitlement gaps are correct behaviour, not outages.
+        // Counting them would open the circuit and cost us the capabilities
+        // this provider does serve.
+        if (marketError.affectsHealth) {
+          this.health.recordFailure(provider.id, marketError.code);
+          marketDataLogger.providerFailure(capability, provider.id, marketError.code);
+        } else {
+          marketDataLogger.providerSkipped(capability, provider.id, marketError.code);
+        }
       }
     }
 

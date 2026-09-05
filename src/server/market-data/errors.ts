@@ -13,6 +13,7 @@ export type MarketDataErrorCode =
   | "NO_DATA"
   | "VALIDATION_FAILED"
   | "CAPABILITY_UNSUPPORTED"
+  | "PREMIUM_REQUIRED"
   | "ALL_PROVIDERS_FAILED";
 
 const PUBLIC_MESSAGES: Record<MarketDataErrorCode, string> = {
@@ -24,6 +25,7 @@ const PUBLIC_MESSAGES: Record<MarketDataErrorCode, string> = {
   NO_DATA: "No data is available for this request.",
   VALIDATION_FAILED: "The market data received did not pass validation.",
   CAPABILITY_UNSUPPORTED: "This kind of market data is not available.",
+  PREMIUM_REQUIRED: "This market data is not included in the current data plan.",
   ALL_PROVIDERS_FAILED: "Market data is temporarily unavailable. Please try again shortly.",
 };
 
@@ -37,6 +39,7 @@ const HTTP_STATUS: Record<MarketDataErrorCode, number> = {
   NO_DATA: 404,
   VALIDATION_FAILED: 502,
   CAPABILITY_UNSUPPORTED: 501,
+  PREMIUM_REQUIRED: 501,
   ALL_PROVIDERS_FAILED: 503,
 };
 
@@ -55,17 +58,35 @@ export class MarketDataError extends Error {
   readonly providerId?: ProviderId;
   /** Whether trying a different provider (or retrying later) could succeed. */
   readonly retryable: boolean;
+  /**
+   * Whether this counts against the provider's health and circuit breaker.
+   *
+   * A provider that correctly reports "I don't cover that symbol" or "that
+   * endpoint needs a paid plan" is working exactly as intended. Counting those
+   * as outages would open its circuit and lose the capabilities it *does*
+   * serve, so they fail over without leaving a mark.
+   */
+  readonly affectsHealth: boolean;
 
   constructor(
     code: MarketDataErrorCode,
     message: string,
-    options: { providerId?: ProviderId; retryable?: boolean; cause?: unknown } = {},
+    options: {
+      providerId?: ProviderId;
+      retryable?: boolean;
+      affectsHealth?: boolean;
+      cause?: unknown;
+    } = {},
   ) {
     super(message, { cause: options.cause });
     this.name = "MarketDataError";
     this.code = code;
     this.providerId = options.providerId;
     this.retryable = options.retryable ?? code !== "INVALID_SYMBOL";
+    this.affectsHealth =
+      options.affectsHealth ??
+      // Capability gaps and coverage gaps are not faults.
+      !(code === "PREMIUM_REQUIRED" || code === "CAPABILITY_UNSUPPORTED" || code === "NO_DATA");
   }
 
   /** Safe for a browser response body. */
