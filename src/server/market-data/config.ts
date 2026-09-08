@@ -36,7 +36,7 @@ function envBool(name: string, fallback: boolean): boolean {
  * so that the moment either is configured with credentials it takes over,
  * without any code change.
  */
-const DEFAULT_ORDER: ProviderId[] = ["alphavantage", "primary", "secondary", "mock"];
+const DEFAULT_ORDER: ProviderId[] = ["alphavantage", "indianapi", "primary", "secondary", "mock"];
 
 /**
  * Capabilities Alpha Vantage cannot serve on a free key, verified by real
@@ -70,6 +70,11 @@ export interface MarketDataConfig {
     timeoutMs: number;
     dailyLimit: number;
     reserve: number;
+  };
+  indianApi: {
+    apiKey: string | undefined;
+    baseUrl: string;
+    timeoutMs: number;
   };
 }
 
@@ -144,5 +149,17 @@ export const marketDataConfig: MarketDataConfig = {
      * real data late in the day.
      */
     reserve: envInt("ALPHA_VANTAGE_RESERVE", 4),
+  },
+
+  /**
+   * IndianAPI (indianapi.in) — a third-party API marketplace reselling
+   * NSE/BSE data, not an exchange-authorized vendor. See
+   * providers/indianapi/index.ts for the capability notes and the caveat on
+   * its licensing terms.
+   */
+  indianApi: {
+    apiKey: process.env.INDIANAPI_API_KEY,
+    baseUrl: process.env.INDIANAPI_BASE_URL ?? "https://stock.indianapi.in",
+    timeoutMs: envInt("INDIANAPI_TIMEOUT_MS", 8000),
   },
 };
