@@ -55,6 +55,10 @@
   --color-brand-800: #413899;
   --color-brand-900: #37307c;
 
+  /* ---- Spark: the wordmark's own accent, used only in the logo --------- */
+  --color-spark-500: #f5821f;
+  --color-spark-600: #e06f10;
+
   /* ---- Direction: rise / fall ------------------------------------------ */
   --color-up-50: #e7f8f1;
   --color-up-100: #c4efdf;

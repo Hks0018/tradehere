@@ -25,15 +25,15 @@ const monoData = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://tradehere.example"),
+  metadataBase: new URL("https://sparkk.example"),
   title: {
-    default: "Tradehere — Understand the markets",
-    template: "%s · Tradehere",
+    default: "Sparkk — Understand the markets",
+    template: "%s · Sparkk",
   },
   description:
     "Explore markets, track opportunities, analyse investments and build your financial knowledge — all from one platform. Phase 1 preview with sample market data.",
   openGraph: {
-    title: "Tradehere — Understand the markets",
+    title: "Sparkk — Understand the markets",
     description:
       "One intelligent platform for understanding financial markets and making smarter financial decisions.",
     type: "website",

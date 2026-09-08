@@ -49,7 +49,7 @@ export function Hero({
         <div className="mt-10 grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-end">
           <Reveal delay={0.5} y={16}>
             <p className="max-w-xl text-lg leading-relaxed text-paper-200/70 sm:text-xl">
-              Tradehere turns market movement into understanding — what is moving, why it matters,
+              Sparkk turns market movement into understanding — what is moving, why it matters,
               and where to look next.
             </p>
           </Reveal>

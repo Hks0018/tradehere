@@ -48,7 +48,7 @@ export function Footer() {
 
         <div className="mt-20 border-t border-paper-200/10 pt-8">
           <p className="max-w-4xl text-xs leading-relaxed text-paper-300/55">
-            <span className="text-paper-200/80">Important.</span> Tradehere is a market information
+            <span className="text-paper-200/80">Important.</span> Sparkk is a market information
             and education product. All prices, indices, fund figures, IPO details and news on this
             site are sample data created for demonstration and are not live market data. Nothing
             here is investment, legal or tax advice, and no returns are promised or guaranteed.
@@ -58,7 +58,7 @@ export function Footer() {
           </p>
 
           <div className="mt-8 flex flex-col gap-4 text-xs text-paper-300/45 sm:flex-row sm:items-center sm:justify-between">
-            <p>© {new Date().getFullYear()} Tradehere. A demonstration platform.</p>
+            <p>© {new Date().getFullYear()} Sparkk. A demonstration platform.</p>
             <p className="eyebrow flex items-center gap-2">
               <span aria-hidden className="size-1.5 rounded-full bg-gold-500" />
               Phase 1 · Sample data
