@@ -12,11 +12,11 @@ export function Logo({ onDark = false, className }: { onDark?: boolean; classNam
     <Link
       href="/"
       aria-label="Sparkk — home"
-      className={cn("group/logo inline-flex items-baseline gap-1", className)}
+      className={cn("group/logo inline-flex items-center gap-1", className)}
     >
-      <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0 translate-y-px" aria-hidden fill="none">
+      <svg viewBox="0 0 24 24" className="h-5 w-5 shrink-0" aria-hidden fill="none">
         <path
-          d="M19 2H10L3 9H12L5 16H14L21 9H12L19 2Z"
+          d="M19 5H10L3 12H12L5 19H14L21 12H12L19 5Z"
           className={cn(
             "transition-[fill,transform] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] origin-center group-hover/logo:scale-110",
             onDark ? "fill-spark-400" : "fill-spark-600",
