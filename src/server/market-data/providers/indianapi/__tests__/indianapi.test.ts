@@ -197,7 +197,8 @@ describe("fundamentals normalization", () => {
   it("parses market cap, ratios and the latest shareholding snapshot", () => {
     const profile = normalizeProfile(STOCK_BODY, "RELIND");
 
-    expect(profile.marketCap).toBe(1772085.95);
+    // IndianAPI reports this in ₹ crore; the platform expects absolute rupees.
+    expect(profile.marketCap).toBe(1772085.95 * 1e7);
     expect(profile.peRatio).toBe(24.5);
     expect(profile.dividendYield).toBe(0.35);
     expect(profile.high52).toBe(1611.2);

@@ -23,6 +23,15 @@ function num(value: unknown): number | undefined {
   return Number.isFinite(parsed) ? parsed : undefined;
 }
 
+/**
+ * IndianAPI reports market cap in ₹ crore (e.g. `1772085.95` for Reliance,
+ * i.e. ₹17.72 lakh crore), but `CompanyProfile.marketCap` is absolute rupees
+ * throughout the rest of the platform — the mock dataset multiplies its own
+ * crore figures by this same factor. Left unconverted, every IndianAPI-sourced
+ * company was undervalued ten-millionfold and misclassified as Small Cap.
+ */
+const CRORE = 1e7;
+
 const MONTHS: Record<string, string> = {
   Jan: "01", Feb: "02", Mar: "03", Apr: "04", May: "05", Jun: "06",
   Jul: "07", Aug: "08", Sep: "09", Oct: "10", Nov: "11", Dec: "12",
@@ -231,7 +240,7 @@ export function normalizeProfile(raw: unknown, tradehereSymbol: string): Company
     sector: industry,
     industry,
     description: body.companyProfile?.companyDescription ?? "",
-    marketCap: num(reusable.marketCap) ?? 0,
+    marketCap: (num(reusable.marketCap) ?? 0) * CRORE,
     peRatio: num(reusable.pPerEBasicExcludingExtraordinaryItemsTTM) ?? 0,
     eps: 0,
     bookValue: 0,
