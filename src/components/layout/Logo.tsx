@@ -6,15 +6,34 @@ import { cn } from "@/utils/cn";
  * the initial and a spark. The mark and the trailing "k" it echoes shift
  * between a light-on-void and a deep-on-paper tone as the navbar crosses
  * between environments, rather than sitting fixed against every background.
+ *
+ * `size="large"` is the navbar's own corner mark — big enough to run past
+ * the header's height on purpose, which is why the navbar keeps its
+ * dividing line off the logo's column rather than drawing it underneath.
  */
-export function Logo({ onDark = false, className }: { onDark?: boolean; className?: string }) {
+export function Logo({
+  onDark = false,
+  size = "default",
+  className,
+}: {
+  onDark?: boolean;
+  size?: "default" | "large";
+  className?: string;
+}) {
+  const large = size === "large";
+
   return (
     <Link
       href="/"
       aria-label="Sparkk — home"
-      className={cn("group/logo inline-flex items-center gap-1", className)}
+      className={cn("group/logo inline-flex items-center", large ? "gap-2" : "gap-1", className)}
     >
-      <svg viewBox="0 0 24 24" className="h-6 w-6 shrink-0" aria-hidden fill="none">
+      <svg
+        viewBox="0 0 24 24"
+        className={cn("shrink-0", large ? "h-16 w-16" : "h-6 w-6")}
+        aria-hidden
+        fill="none"
+      >
         <path
           d="M19 4H11L5 12H12L5 20H13L19 12H12Z"
           className={cn(
@@ -25,7 +44,8 @@ export function Logo({ onDark = false, className }: { onDark?: boolean; classNam
       </svg>
       <span
         className={cn(
-          "font-display text-[1.1875rem] font-bold tracking-[-0.03em]",
+          "font-display font-bold tracking-[-0.03em]",
+          large ? "text-[3.25rem]" : "text-[1.1875rem]",
           onDark ? "text-paper-50" : "text-ink-900",
         )}
       >

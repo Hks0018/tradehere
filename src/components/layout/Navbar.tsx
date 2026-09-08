@@ -68,18 +68,32 @@ export function Navbar() {
 
       <header
         className={cn(
-          "fixed inset-x-0 top-0 z-90 transition-[background-color,border-color,backdrop-filter] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
-          inverted && "on-void border-b border-transparent bg-transparent",
-          !inverted && scrolled && "border-b border-ink-100 bg-paper-50/85 backdrop-blur-xl",
-          !inverted && !scrolled && "border-b border-transparent bg-transparent",
-          openMenu && "border-b border-ink-100 bg-paper-50",
+          "fixed inset-x-0 top-0 z-90 transition-[background-color,backdrop-filter] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+          inverted && "on-void bg-transparent",
+          !inverted && scrolled && "bg-paper-50/85 backdrop-blur-xl",
+          !inverted && !scrolled && "bg-transparent",
+          openMenu && "bg-paper-50",
         )}
         onMouseLeave={() => setOpenMenu(null)}
       >
         <div className="container-page">
-          <div className="flex h-18 items-center justify-between gap-8">
-            <Logo onDark={inverted} />
+          <div className="relative flex h-18 items-center justify-between gap-8">
+            {/* Deliberately bigger than the row it sits in — positioned out
+                of flow so it can overflow past the row without stretching
+                the header (and pushing page content down with it). The
+                dividing line below stays on the row rather than crossing it. */}
+            <Logo onDark={inverted} size="large" className="absolute left-0 top-1 z-50" />
+            <div className="w-72 shrink-0" aria-hidden="true" />
 
+            <div
+              className={cn(
+                "flex h-18 min-w-0 flex-1 items-center justify-between gap-8 border-b transition-colors duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]",
+                inverted && "border-transparent",
+                !inverted && scrolled && "border-ink-100",
+                !inverted && !scrolled && "border-transparent",
+                openMenu && "border-ink-100",
+              )}
+            >
             <nav aria-label="Primary" className="hidden lg:block">
               <ul className="flex items-center gap-8">
                 {PRIMARY_NAV.map((group) => {
@@ -182,6 +196,7 @@ export function Navbar() {
                 <span aria-hidden className="h-px w-5 bg-current" />
               </button>
             </div>
+            </div>
           </div>
         </div>
 
@@ -193,7 +208,7 @@ export function Navbar() {
               animate={{ opacity: 1, y: 0 }}
               exit={reduceMotion ? { opacity: 0 } : { opacity: 0, y: -10 }}
               transition={{ duration: 0.24, ease: [0.22, 1, 0.36, 1] }}
-              className="absolute inset-x-0 top-full hidden border-b border-ink-100 bg-paper-50 lg:block"
+              className="absolute inset-x-0 top-18 hidden border-b border-ink-100 bg-paper-50 lg:block"
             >
               <MegaMenu label={openMenu} />
             </motion.div>
