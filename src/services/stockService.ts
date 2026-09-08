@@ -306,14 +306,34 @@ export async function getStockStory(symbol: string): Promise<StockStory | undefi
     } ${Math.abs(sectorChange).toFixed(2)}% overall, so the move is ${
       Math.abs(vsSector) < 0.5 ? "in line with" : vsSector > 0 ? "stronger than" : "weaker than"
     } its peers.`,
-    `The company trades at ${stock.pe.toFixed(1)} times earnings on a book value of ₹${stock.bookValue.toFixed(
-      0,
-    )} per share, with a return on equity of ${stock.roe.toFixed(1)}% and a debt-to-equity ratio of ${stock.debtToEquity.toFixed(
-      2,
-    )}. Revenue grew ${stock.revenueGrowth.toFixed(1)}% in the most recent year and profit ${stock.profitGrowth.toFixed(
-      1,
-    )}%.`,
   ];
+
+  // A live vendor that lacks a fundamentals field reports it as 0 rather than
+  // fabricating a value (see `CompanyProfile`) — none of these figures are
+  // ever legitimately exactly zero for an operating company, so a stray 0
+  // here means "unknown", not "measured". Writing a sentence around an
+  // unknown figure would assert something false, so the paragraph is left
+  // out entirely rather than printed half-true.
+  const fundamentalsKnown = [
+    stock.pe,
+    stock.bookValue,
+    stock.roe,
+    stock.debtToEquity,
+    stock.revenueGrowth,
+    stock.profitGrowth,
+  ].every((value) => value !== 0);
+
+  if (fundamentalsKnown) {
+    paragraphs.push(
+      `The company trades at ${stock.pe.toFixed(1)} times earnings on a book value of ₹${stock.bookValue.toFixed(
+        0,
+      )} per share, with a return on equity of ${stock.roe.toFixed(1)}% and a debt-to-equity ratio of ${stock.debtToEquity.toFixed(
+        2,
+      )}. Revenue grew ${stock.revenueGrowth.toFixed(1)}% in the most recent year and profit ${stock.profitGrowth.toFixed(
+        1,
+      )}%.`,
+    );
+  }
 
   return { verdict, paragraphs, sectorChange, benchmarkChange };
 }

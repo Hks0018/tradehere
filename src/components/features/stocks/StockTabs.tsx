@@ -13,8 +13,10 @@ import {
   formatCompactCurrency,
   formatCurrency,
   formatNumber,
+  formatOrDash,
   formatPercent,
   formatRelative,
+  textOrDash,
   trendClass,
 } from "@/utils/format";
 
@@ -80,13 +82,22 @@ function OverviewTab({ stock }: { stock: StockDetail }) {
   return (
     <div className="grid gap-4 lg:grid-cols-[minmax(0,1.5fr)_minmax(0,1fr)]">
       <Panel title="Company overview">
-        <p className="text-sm leading-relaxed text-ink-600">{stock.description}</p>
+        <p className="text-sm leading-relaxed text-ink-600">
+          {stock.description.trim() === "" ? "No overview available for this company." : stock.description}
+        </p>
         <StatGrid className="mt-2" columns={4}>
           <Stat label="Sector" value={<span className="text-sm">{stock.sector}</span>} />
           <Stat label="Industry" value={<span className="text-sm">{stock.industry}</span>} />
-          <Stat label="Founded" value={<span className="text-sm">{stock.founded}</span>} />
-          <Stat label="Employees" value={<span className="text-sm">{formatNumber(stock.employees, 0)}</span>} />
-          <Stat label="Headquarters" value={<span className="text-sm">{stock.headquarters}</span>} className="col-span-2" />
+          <Stat label="Founded" value={<span className="text-sm">{formatOrDash(stock.founded, (v) => String(v))}</span>} />
+          <Stat
+            label="Employees"
+            value={<span className="text-sm">{formatOrDash(stock.employees, (v) => formatNumber(v, 0))}</span>}
+          />
+          <Stat
+            label="Headquarters"
+            value={<span className="text-sm">{textOrDash(stock.headquarters)}</span>}
+            className="col-span-2"
+          />
           <Stat label="Exchange" value={<span className="text-sm">{stock.exchange}</span>} />
           <Stat label="Cap bucket" value={<span className="text-sm">{stock.capBucket}</span>} />
         </StatGrid>
@@ -124,33 +135,35 @@ function OverviewTab({ stock }: { stock: StockDetail }) {
 
 function FundamentalsTab({ stock }: { stock: StockDetail }) {
   const range = stock.high52 - stock.low52;
-  const position = Math.min(Math.max(((stock.price - stock.low52) / range) * 100, 0), 100);
+  const position =
+    range === 0 ? 0 : Math.min(Math.max(((stock.price - stock.low52) / range) * 100, 0), 100);
 
   return (
     <div className="grid gap-4 lg:grid-cols-2">
       <Panel title="Valuation">
         <StatGrid columns={2}>
-          <Stat label="Market Cap" value={formatCompactCurrency(stock.marketCap)} />
-          <Stat label="P/E Ratio" value={formatNumber(stock.pe)} />
-          <Stat label="EPS" value={formatCurrency(stock.eps)} />
-          <Stat label="Book Value" value={formatCurrency(stock.bookValue)} />
+          <Stat label="Market Cap" value={formatOrDash(stock.marketCap, formatCompactCurrency)} />
+          <Stat label="P/E Ratio" value={formatOrDash(stock.pe, formatNumber)} />
+          <Stat label="EPS" value={formatOrDash(stock.eps, formatCurrency)} />
+          <Stat label="Book Value" value={formatOrDash(stock.bookValue, formatCurrency)} />
+          {/* Zero is a real, common dividend yield — never treated as "missing". */}
           <Stat label="Dividend Yield" value={`${stock.dividendYield.toFixed(2)}%`} />
-          <Stat label="Debt / Equity" value={formatNumber(stock.debtToEquity)} />
+          <Stat label="Debt / Equity" value={formatOrDash(stock.debtToEquity, formatNumber)} />
         </StatGrid>
       </Panel>
 
       <Panel title="Performance & range">
         <StatGrid columns={2}>
-          <Stat label="Return on Equity" value={`${stock.roe.toFixed(1)}%`} />
+          <Stat label="Return on Equity" value={formatOrDash(stock.roe, (v) => `${v.toFixed(1)}%`)} />
           <Stat
             label="Revenue Growth"
-            value={formatPercent(stock.revenueGrowth)}
-            valueClassName={trendClass(stock.revenueGrowth)}
+            value={formatOrDash(stock.revenueGrowth, formatPercent)}
+            valueClassName={stock.revenueGrowth === 0 ? undefined : trendClass(stock.revenueGrowth)}
           />
           <Stat
             label="Profit Growth"
-            value={formatPercent(stock.profitGrowth)}
-            valueClassName={trendClass(stock.profitGrowth)}
+            value={formatOrDash(stock.profitGrowth, formatPercent)}
+            valueClassName={stock.profitGrowth === 0 ? undefined : trendClass(stock.profitGrowth)}
           />
           <Stat label="Volume" value={formatNumber(stock.volume, 0)} />
         </StatGrid>
@@ -168,8 +181,8 @@ function FundamentalsTab({ stock }: { stock: StockDetail }) {
             />
           </div>
           <div className="mt-3 flex items-center justify-between font-mono text-sm">
-            <span className="tnum text-ink-900">{formatCurrency(stock.low52)}</span>
-            <span className="tnum text-ink-900">{formatCurrency(stock.high52)}</span>
+            <span className="tnum text-ink-900">{formatOrDash(stock.low52, formatCurrency)}</span>
+            <span className="tnum text-ink-900">{formatOrDash(stock.high52, formatCurrency)}</span>
           </div>
         </div>
       </Panel>

@@ -21,7 +21,7 @@ import {
   getStockWithProvenance,
 } from "@/services/stockService";
 import { describeQuote, describeSection, isRealMarketData } from "@/utils/provenance";
-import { formatCompactCurrency, formatCurrency, formatSigned } from "@/utils/format";
+import { formatCompactCurrency, formatCurrency, formatOrDash, formatSigned } from "@/utils/format";
 
 interface PageProps {
   params: Promise<{ symbol: string }>;
@@ -175,11 +175,11 @@ export default async function StockDetailPage({ params }: PageProps) {
           <Eyebrow>{describeSection(profileMeta, "Key numbers")}</Eyebrow>
           <Reveal delay={0.1} y={16}>
             <StatGrid columns={4} className="mt-8 sm:grid-cols-3 lg:grid-cols-5">
-              <Stat label="Market cap" value={formatCompactCurrency(stock.marketCap)} />
-              <Stat label="P/E ratio" value={stock.pe.toFixed(2)} />
-              <Stat label="EPS" value={formatCurrency(stock.eps)} />
-              <Stat label="52-week high" value={formatCurrency(stock.high52)} />
-              <Stat label="52-week low" value={formatCurrency(stock.low52)} />
+              <Stat label="Market cap" value={formatOrDash(stock.marketCap, formatCompactCurrency)} />
+              <Stat label="P/E ratio" value={formatOrDash(stock.pe, (v) => v.toFixed(2))} />
+              <Stat label="EPS" value={formatOrDash(stock.eps, formatCurrency)} />
+              <Stat label="52-week high" value={formatOrDash(stock.high52, formatCurrency)} />
+              <Stat label="52-week low" value={formatOrDash(stock.low52, formatCurrency)} />
             </StatGrid>
           </Reveal>
 

@@ -3,7 +3,7 @@ import type { Stock } from "@/types";
 import { Delta } from "@/components/ui/Delta";
 import { Sparkline } from "@/components/ui/Sparkline";
 import { cn } from "@/utils/cn";
-import { formatCompactCurrency, formatCurrency } from "@/utils/format";
+import { formatCompactCurrency, formatCurrency, formatOrDash } from "@/utils/format";
 
 /**
  * A stock in a grid. Anchored by a rule rather than enclosed in a box — the
@@ -44,7 +44,7 @@ export function StockCard({ stock, className }: { stock: Stock; className?: stri
       <div className="mt-4 flex items-baseline justify-between gap-3">
         <p className="tnum font-mono text-sm text-ink-900">{formatCurrency(stock.price)}</p>
         <p className="font-mono text-[0.6875rem] text-ink-400">
-          {formatCompactCurrency(stock.marketCap)}
+          {formatOrDash(stock.marketCap, formatCompactCurrency)}
         </p>
       </div>
     </Link>

@@ -72,6 +72,23 @@ export function formatRelative(iso: string, reference: string): string {
   return formatDate(iso);
 }
 
+/**
+ * Renders a dash instead of a figure that almost certainly means "not
+ * provided" rather than a genuine measurement — a P/E ratio, EPS, founding
+ * year or 52-week high of exactly zero does not happen for a real, operating,
+ * publicly traded company. Providers that lack a field return 0 for it rather
+ * than fabricating a value (see `CompanyProfile` normalization); this is
+ * where that absence is finally made visible instead of read as a real zero.
+ */
+export function formatOrDash(value: number, format: (value: number) => string): string {
+  return value === 0 ? "—" : format(value);
+}
+
+/** String counterpart: an empty string from a provider means the same thing. */
+export function textOrDash(value: string): string {
+  return value.trim() === "" ? "—" : value;
+}
+
 export function trendClass(value: number): string {
   if (value > 0) return "text-up-600";
   if (value < 0) return "text-down-600";

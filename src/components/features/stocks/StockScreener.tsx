@@ -18,7 +18,7 @@ import { StockRow } from "@/components/market/StockCard";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/utils/cn";
-import { formatCompactCurrency, formatCompactNumber, formatCurrency } from "@/utils/format";
+import { formatCompactCurrency, formatCompactNumber, formatCurrency, formatOrDash } from "@/utils/format";
 
 const CATEGORIES: { value: StockCategory; label: string }[] = [
   { value: "all", label: "All" },
@@ -298,7 +298,7 @@ export function StockScreener({
                       <Delta value={stock.changePercent} size="sm" className="justify-end" />
                     </td>
                     <td className="tnum hidden px-4 py-4 text-right font-mono text-sm text-ink-600 lg:table-cell">
-                      {formatCompactCurrency(stock.marketCap)}
+                      {formatOrDash(stock.marketCap, formatCompactCurrency)}
                     </td>
                     <td className="tnum hidden px-4 py-4 text-right font-mono text-sm text-ink-600 xl:table-cell">
                       {formatCompactNumber(stock.volume)}
