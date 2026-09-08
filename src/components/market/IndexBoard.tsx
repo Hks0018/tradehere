@@ -5,6 +5,14 @@ import { Delta } from "@/components/ui/Delta";
 import { Sparkline } from "@/components/ui/Sparkline";
 import { Reveal } from "@/components/ui/Reveal";
 import { formatNumber, formatSigned } from "@/utils/format";
+import { describeQuote } from "@/utils/provenance";
+
+/** One honest line about where an index's level came from. */
+function freshnessLabel(index: MarketIndex): string {
+  return index.meta
+    ? describeQuote(index.meta)
+    : "Sample close · not a live quote";
+}
 
 /**
  * Indices with hierarchy rather than uniformity: the benchmark is set at
@@ -34,6 +42,7 @@ export function IndexBoard({ indices }: { indices: MarketIndex[] }) {
               <p className="tnum mt-2 font-mono text-sm text-ink-500">
                 {formatSigned(benchmark.change)} today
               </p>
+              <p className="eyebrow mt-1 text-ink-400">{freshnessLabel(benchmark)}</p>
 
               <div className="mt-7">
                 <Sparkline
@@ -75,6 +84,7 @@ export function IndexBoard({ indices }: { indices: MarketIndex[] }) {
                 <p className="tnum mt-3 font-display text-data-lg font-semibold text-ink-900">
                   <AnimatedNumber value={index.value} />
                 </p>
+                <p className="eyebrow mt-1 text-ink-400">{freshnessLabel(index)}</p>
                 <div className="mt-4">
                   <Sparkline
                     data={index.series}
@@ -108,7 +118,7 @@ export function IndexBoard({ indices }: { indices: MarketIndex[] }) {
             </thead>
             <tbody>
               {rest.map((index) => (
-                <tr key={index.id} className="border-t border-ink-100">
+                <tr key={index.id} className="border-t border-ink-100" title={freshnessLabel(index)}>
                   <th scope="row" className="py-4 pr-4 text-left text-sm font-medium text-ink-900">
                     <Link href="#indices" className="hover:text-brand-600">
                       {index.name}

@@ -53,6 +53,13 @@ export interface MarketDataProvider {
     interval: CandleInterval,
   ): Promise<ProviderResult<HistoricalCandle[]>>;
   getIndices?(): Promise<ProviderResult<NormalizedIndex[]>>;
+  /**
+   * One index at a time, for a vendor that covers only some of the indices
+   * Tradehere tracks. Kept separate from `getIndices`: a partial bulk answer
+   * would silently drop the indices this vendor does not publish, since the
+   * orchestrator never blends results from more than one provider per call.
+   */
+  getIndex?(symbol: string): Promise<ProviderResult<NormalizedIndex>>;
   searchInstruments?(query: string, limit: number): Promise<ProviderResult<InstrumentSearchResult[]>>;
   /** The tradable universe this provider knows about. */
   listInstruments?(): Promise<ProviderResult<InstrumentSearchResult[]>>;

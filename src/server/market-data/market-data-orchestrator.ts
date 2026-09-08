@@ -140,6 +140,30 @@ export class MarketDataOrchestrator {
     });
   }
 
+  /**
+   * A single index, routed independently of the bulk `getIndices` list.
+   *
+   * This is what lets a vendor that only publishes some of Tradehere's
+   * indices (NSE covers four of eight) contribute real figures for those
+   * without a partial bulk answer silently dropping the rest — see
+   * `MarketDataProvider.getIndex`.
+   */
+  getIndex(
+    symbol: string,
+    options: RequestOptions = {},
+  ): Promise<DataEnvelope<NormalizedIndex>> {
+    const normalized = symbol.trim().toUpperCase();
+    return this.resolve<NormalizedIndex>({
+      capability: "indices",
+      method: "getIndex",
+      cacheKind: "indices",
+      key: cacheKey(["index", normalized]),
+      call: (provider) => provider.getIndex!(normalized),
+      validate: (index) => Boolean(index?.symbol) && Number.isFinite(index.currentValue),
+      allowMetered: options.allowMetered,
+    });
+  }
+
   searchInstruments(
     query: string,
     limit = 12,

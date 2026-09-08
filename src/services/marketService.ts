@@ -2,6 +2,7 @@ import "server-only";
 
 import { MARKET_HIGHLIGHTS } from "@/data/markets";
 import { marketData } from "@/server/market-data";
+import type { NormalizedIndex, ResponseMeta } from "@/server/market-data";
 import type {
   FlowChain,
   MarketHighlight,
@@ -43,11 +44,34 @@ async function indexSeries(symbol: string) {
   }
 }
 
+/**
+ * A provider that only publishes some of Tradehere's indices (NSE covers
+ * four of eight) answers through `getIndex`, one at a time, rather than the
+ * bulk `getIndices` — see `MarketDataProvider.getIndex`. This tries that
+ * per-index route for every entry in the base catalog and keeps whichever
+ * figure it gets back, falling back to the catalog's own value — and its own
+ * provenance — when no provider covers that particular index.
+ */
+async function withLiveOverride(
+  base: NormalizedIndex,
+  baseMeta: ResponseMeta,
+): Promise<{ index: NormalizedIndex; meta: ResponseMeta }> {
+  try {
+    const live = await marketData.getIndex(base.symbol);
+    return { index: live.data, meta: live.meta };
+  } catch {
+    return { index: base, meta: baseMeta };
+  }
+}
+
 export async function getIndices(region?: MarketIndex["region"]): Promise<MarketIndex[]> {
-  const indices = await marketData.getIndices();
+  const base = await marketData.getIndices();
 
   const mapped = await Promise.all(
-    indices.data.map(async (index) => toMarketIndex(index, await indexSeries(index.symbol))),
+    base.data.map(async (index) => {
+      const { index: resolved, meta } = await withLiveOverride(index, base.meta);
+      return toMarketIndex(resolved, await indexSeries(resolved.symbol), meta);
+    }),
   );
 
   return region ? mapped.filter((index) => index.region === region) : mapped;

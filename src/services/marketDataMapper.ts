@@ -7,6 +7,7 @@ import type {
   NormalizedIndex,
   NormalizedQuote,
   NormalizedSector,
+  ResponseMeta,
 } from "@/server/market-data";
 import type {
   MarketCapBucket,
@@ -42,7 +43,11 @@ export function candlesToPricePoints(
   }));
 }
 
-export function toMarketIndex(index: NormalizedIndex, series: PricePoint[]): MarketIndex {
+export function toMarketIndex(
+  index: NormalizedIndex,
+  series: PricePoint[],
+  meta?: ResponseMeta,
+): MarketIndex {
   return {
     id: index.symbol.toLowerCase(),
     name: index.name,
@@ -55,6 +60,7 @@ export function toMarketIndex(index: NormalizedIndex, series: PricePoint[]): Mar
     dayLow: index.low,
     previousClose: index.previousClose,
     series,
+    meta: meta && { source: meta.source, status: meta.status, timestamp: meta.timestamp },
   };
 }
 

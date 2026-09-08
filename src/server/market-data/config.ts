@@ -46,6 +46,14 @@ const DEFAULT_ORDER: ProviderId[] = ["alphavantage", "indianapi", "primary", "se
  */
 const WITHOUT_ALPHA_VANTAGE: ProviderId[] = ["primary", "secondary", "mock"];
 
+/**
+ * Indices additionally put NSE first. It only implements `getIndex` (one
+ * index at a time), not the bulk `getIndices`, so its presence here cannot
+ * cause the complete eight-index sample list to be displaced — see
+ * `NseIndicesProvider`'s class comment.
+ */
+const INDICES_ORDER: ProviderId[] = ["nse", ...WITHOUT_ALPHA_VANTAGE];
+
 export interface MarketDataConfig {
   /** Per-capability provider preference, highest priority first. */
   priority: Record<Capability, ProviderId[]>;
@@ -76,6 +84,15 @@ export interface MarketDataConfig {
     baseUrl: string;
     timeoutMs: number;
   };
+  nse: {
+    enabled: boolean;
+    archiveBaseUrl: string;
+    timeoutMs: number;
+    /** Calendar days to walk back for the last published session. */
+    lookbackDays: number;
+    /** How long a resolved trading day is trusted before checking for a newer one. */
+    recheckMs: number;
+  };
 }
 
 export type CacheKind =
@@ -93,7 +110,7 @@ export const marketDataConfig: MarketDataConfig = {
   priority: {
     quotes: envList("MARKET_PRIORITY_QUOTES", DEFAULT_ORDER),
     historical: envList("MARKET_PRIORITY_HISTORICAL", DEFAULT_ORDER),
-    indices: envList("MARKET_PRIORITY_INDICES", WITHOUT_ALPHA_VANTAGE),
+    indices: envList("MARKET_PRIORITY_INDICES", INDICES_ORDER),
     search: envList("MARKET_PRIORITY_SEARCH", DEFAULT_ORDER),
     sectors: envList("MARKET_PRIORITY_SECTORS", WITHOUT_ALPHA_VANTAGE),
     breadth: envList("MARKET_PRIORITY_BREADTH", WITHOUT_ALPHA_VANTAGE),
@@ -161,5 +178,19 @@ export const marketDataConfig: MarketDataConfig = {
     apiKey: process.env.INDIANAPI_API_KEY,
     baseUrl: process.env.INDIANAPI_BASE_URL ?? "https://stock.indianapi.in",
     timeoutMs: envInt("INDIANAPI_TIMEOUT_MS", 8000),
+  },
+
+  /**
+   * NSE's own published end-of-day indices-close report — a public,
+   * unauthenticated static file, not the interactive nseindia.com API (which
+   * sits behind bot detection a server-side request cannot pass). See
+   * providers/nse-indices/index.ts.
+   */
+  nse: {
+    enabled: envBool("NSE_ENABLED", true),
+    archiveBaseUrl: process.env.NSE_ARCHIVE_BASE_URL ?? "https://nsearchives.nseindia.com",
+    timeoutMs: envInt("NSE_TIMEOUT_MS", 15_000),
+    lookbackDays: envInt("NSE_LOOKBACK_DAYS", 10),
+    recheckMs: envInt("NSE_RECHECK_MS", 60 * 60_000),
   },
 };

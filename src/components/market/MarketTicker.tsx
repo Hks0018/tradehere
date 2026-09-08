@@ -15,7 +15,7 @@ export function MarketTicker({ indices, onDark = false }: { indices: MarketIndex
         "relative overflow-hidden border-y",
         onDark ? "border-paper-200/12 bg-void-900" : "border-ink-200 bg-white",
       )}
-      aria-label="Sample index levels"
+      aria-label="Market index levels"
     >
       <div className="th-marquee flex w-max items-center py-3">
         {items.map((index, i) => (

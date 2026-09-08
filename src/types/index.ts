@@ -6,6 +6,10 @@
  * adapter must satisfy exactly the same contracts, so no UI code changes.
  */
 
+// Type-only: erased at compile time, so this does not pull the `server-only`
+// guarded engine into a client bundle.
+import type { DataStatus } from "@/server/market-data/types";
+
 export type Trend = "up" | "down" | "flat";
 
 export interface PricePoint {
@@ -28,6 +32,8 @@ export interface MarketIndex {
   dayLow: number;
   previousClose: number;
   series: PricePoint[];
+  /** Present when a provider (rather than the sample catalog) answered this index. */
+  meta?: { source: string | null; status: DataStatus; timestamp: string };
 }
 
 export type MarketCapBucket = "Large Cap" | "Mid Cap" | "Small Cap";

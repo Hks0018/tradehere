@@ -10,6 +10,8 @@ export interface Provenance {
 
 const PROVIDER_LABELS: Record<string, string> = {
   alphavantage: "Alpha Vantage",
+  indianapi: "IndianAPI",
+  nse: "NSE India",
   mock: "Sample data",
   primary: "Primary vendor",
   secondary: "Secondary vendor",

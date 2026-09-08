@@ -5,6 +5,7 @@ import { ProviderRegistry } from "./provider.registry";
 import { AlphaVantageMarketDataProvider } from "./providers/alpha-vantage";
 import { IndianApiMarketDataProvider } from "./providers/indianapi";
 import { MockMarketDataProvider } from "./providers/mock.provider";
+import { NseIndicesProvider } from "./providers/nse-indices";
 import { PrimaryMarketDataProvider } from "./providers/primary.provider";
 import { SecondaryMarketDataProvider } from "./providers/secondary.provider";
 
@@ -22,6 +23,7 @@ function createOrchestrator(): MarketDataOrchestrator {
   const registry = new ProviderRegistry()
     .register(new AlphaVantageMarketDataProvider())
     .register(new IndianApiMarketDataProvider())
+    .register(new NseIndicesProvider())
     .register(new PrimaryMarketDataProvider())
     .register(new SecondaryMarketDataProvider())
     .register(new MockMarketDataProvider());
@@ -54,5 +56,6 @@ export { ProviderRegistry } from "./provider.registry";
 export { MarketDataError, isMarketDataError } from "./errors";
 export { AlphaVantageMarketDataProvider } from "./providers/alpha-vantage";
 export { IndianApiMarketDataProvider } from "./providers/indianapi";
+export { NseIndicesProvider } from "./providers/nse-indices";
 export type { MarketDataErrorCode } from "./errors";
 export * from "./types";
